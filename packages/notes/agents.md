@@ -4,6 +4,8 @@
 
 An MCP (Model Context Protocol) server that gives AI assistants (Cursor, Claude, etc.) direct access to SAP Notes and Knowledge Base articles. It authenticates with SAP's systems via browser automation (Playwright) and exposes two tools: **search** and **get** for SAP Notes.
 
+> **Monorepo note (2026):** This package now lives in the [`sap-mcp-servers`](../../README.md) monorepo as `packages/notes`, and the **Playwright login has been extracted** into the shared `@marianfoo/sap-mcp-auth` module (class `SapWebAuthenticator`). `src/auth.ts` is now a thin wrapper that hands a notes-specific `ServiceProfile` to that shared module. The repo-root **[AGENTS.md](../../AGENTS.md)** is the authoritative dev-setup guide. Where sections below describe a standalone `SapAuthenticator` implemented in `src/auth.ts`, treat that as historical — the auth mechanics now live in the shared package.
+
 ## Architecture Overview
 
 ```

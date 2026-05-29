@@ -6,7 +6,7 @@ Shared SAP IAS (`accounts.sap.com`) browser-login and session module for SAP MCP
 
 It drives a [Playwright](https://playwright.dev) browser to complete SAP login — username/password, SAP Passport (PFX) certificate, or interactive/manual — captures and caches the resulting session cookies, and returns a structured `AuthSession`. Service-specific differences (which app URL to open, how to scope cookies, how to validate a session) are supplied through a small `ServiceProfile`, so the login mechanics live in one place.
 
-Extracted from and used by [`sap-roadmap-mcp`](https://github.com/marianfoo/sap-roadmap-mcp), [`sap-api-hub-mcp`](https://github.com/marianfoo/sap-api-hub-mcp), and [`mcp-sap-notes`](https://github.com/marianfoo/mcp-sap-notes).
+Used by its sibling servers in the monorepo: [`sap-api-hub-mcp`](../api-hub), [`sap-roadmap-mcp`](../roadmap), and [`sap-note-search-mcp`](../notes). Each supplies a service-specific `ServiceProfile` to this module's `SapWebAuthenticator`.
 
 > **Unofficial.** This package is not endorsed by SAP. It automates authenticated SAP web endpoints and browser session cookies in ways that may be restricted by SAP terms of service or your organization's policies. Use at your own risk and only where you are permitted to.
 

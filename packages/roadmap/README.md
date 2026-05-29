@@ -28,12 +28,16 @@ ROADMAP_TOKEN_CACHE_FILE=/absolute/path/to/roadmap-token-cache.json
 
 ## Development Setup
 
+This package lives in the [`sap-mcp-servers`](../../README.md) monorepo — clone and build from the repo root:
+
 ```bash
-git clone https://github.com/marianfoo/sap-roadmap-mcp.git
-cd sap-roadmap-mcp
-npm install
-npm run build
+git clone https://github.com/marianfoo/sap-mcp-servers.git
+cd sap-mcp-servers
+npm install          # installs all workspaces + links @marianfoo/sap-mcp-auth locally
+npm run build        # builds auth first, then the servers → this one lands in packages/roadmap/dist
 ```
+
+Build just this package with `npm run build -w sap-roadmap-mcp` (after auth is built).
 
 Fill the scaffolded `.env`:
 

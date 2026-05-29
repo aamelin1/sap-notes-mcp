@@ -80,7 +80,4 @@ only if you introduce a breaking change (they pin `^0.1.0`).
 
 ## Licensing
 
-- `@marianfoo/sap-mcp-auth`, `sap-api-hub-mcp`, `sap-roadmap-mcp` — **Apache-2.0**
-- `sap-note-search-mcp` — **MIT**
-
-See each package's `LICENSE` file.
+All packages are licensed **Apache-2.0** — see each package's `LICENSE` file.

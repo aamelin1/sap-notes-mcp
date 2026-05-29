@@ -49,4 +49,7 @@ Configure MCP clients with the `sap-api-hub-mcp` binary and explicit `ENV_FILE` 
 
 ## Repository metadata
 
-Update `repository`, `bugs`, and `homepage` in `package.json` if the GitHub URL differs from `https://github.com/marianfoo/sap-api-hub-mcp`.
+This package is developed in the [`sap-mcp-servers`](https://github.com/marianfoo/sap-mcp-servers)
+monorepo. Its `package.json` `repository` points there with `"directory": "packages/api-hub"`; keep
+`bugs`/`homepage` aligned with the monorepo. See the repo-root **AGENTS.md** for the workspace
+publish flow (`npm publish -w sap-api-hub-mcp`).

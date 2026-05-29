@@ -8,11 +8,13 @@
 
 ## Installation
 
+This package lives in the [`sap-mcp-servers`](../../../README.md) monorepo — clone and build from the repo root:
+
 ```bash
-git clone https://github.com/marianfoo/mcp-sap-notes.git
-cd mcp-sap-notes
-npm install
-npm run build
+git clone https://github.com/marianfoo/sap-mcp-servers.git
+cd sap-mcp-servers
+npm install          # installs all workspaces + links @marianfoo/sap-mcp-auth locally
+npm run build        # builds auth first, then the servers → this one lands in packages/notes/dist
 ```
 
 ### Install Playwright Browsers

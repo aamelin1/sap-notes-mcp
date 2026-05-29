@@ -30,13 +30,17 @@ API_HUB_TOKEN_CACHE_FILE=/absolute/path/to/api-hub-token-cache.json
 
 ## Development Setup
 
+This package lives in the [`sap-mcp-servers`](../../README.md) monorepo — clone and build from the repo root:
+
 ```bash
-git clone https://github.com/marianfoo/sap-api-hub-mcp.git
-cd sap-api-hub-mcp
-npm install
-npx playwright install chromium
-npm run build
+git clone https://github.com/marianfoo/sap-mcp-servers.git
+cd sap-mcp-servers
+npm install                # installs all workspaces + links @marianfoo/sap-mcp-auth locally
+npm run install:browsers   # one-time: Chromium for Playwright login
+npm run build              # builds auth first, then the servers → this one lands in packages/api-hub/dist
 ```
+
+Build just this package with `npm run build -w sap-api-hub-mcp` (after auth is built).
 
 Fill the scaffolded `.env`:
 

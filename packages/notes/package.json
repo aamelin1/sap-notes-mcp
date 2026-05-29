@@ -44,7 +44,7 @@
     "knowledge-base"
   ],
   "author": "marianfoo",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/marianfoo/sap-mcp-servers.git",
