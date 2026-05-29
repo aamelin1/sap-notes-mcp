@@ -1,0 +1,70 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+env:
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
+jobs:
+  # release-please reads release-please-config.json + .release-please-manifest.json
+  # (manifest / monorepo mode). On a conventional-commit push it maintains one
+  # "release PR" per changed package; merging that PR bumps the package version,
+  # updates its CHANGELOG, tags it (e.g. sap-api-hub-mcp-vX.Y.Z), and sets the
+  # per-path release outputs consumed by the publish job below.
+  release-please:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    outputs:
+      releases_created: ${{ steps.release.outputs.releases_created }}
+      paths_released: ${{ steps.release.outputs.paths_released }}
+    steps:
+      - uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7  # v4
+        id: release
+
+  # Publishes ONLY the packages release-please just released, to npm, with
+  # provenance via OIDC trusted publishing (no long-lived NPM_TOKEN needed —
+  # see AGENTS.md "Releasing" for the one-time npm trusted-publisher setup).
+  publish-npm:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.releases_created == 'true' }}
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # required for npm OIDC trusted publishing + --provenance
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: 22
+          registry-url: 'https://registry.npmjs.org'
+          cache: 'npm'
+
+      - name: Upgrade npm (>= 11.5 required for OIDC trusted publishing)
+        run: npm install --global npm@latest
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build (auth → servers)
+        run: npm run build
+
+      - name: Publish released packages
+        env:
+          PATHS_RELEASED: ${{ needs.release-please.outputs.paths_released }}
+        run: |
+          set -euo pipefail
+          echo "release-please released: $PATHS_RELEASED"
+          for path in $(jq -r '.[]' <<< "$PATHS_RELEASED"); do
+            echo "::group::npm publish $path"
+            npm publish --workspace "$path" --provenance --access public
+            echo "::endgroup::"
+          done

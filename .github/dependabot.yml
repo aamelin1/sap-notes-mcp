@@ -1,0 +1,33 @@
+version: 2
+updates:
+  # npm dependencies across all workspaces (root lockfile).
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    open-pull-requests-limit: 10
+    versioning-strategy: "increase"
+    commit-message:
+      prefix: "chore(deps)"          # passes commitlint (type=chore, scope=deps)
+    labels:
+      - "dependencies"
+    groups:
+      # One PR for dev-only minor/patch bumps — low review cost.
+      dev-dependencies:
+        dependency-type: "development"
+        update-types: ["minor", "patch"]
+      # @types/* are noisy — group them.
+      types:
+        patterns: ["@types/*"]
+
+  # GitHub Actions used in the workflows.
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+    commit-message:
+      prefix: "ci(deps)"             # passes commitlint (type=ci, scope=deps)
+    labels:
+      - "dependencies"

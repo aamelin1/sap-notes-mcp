@@ -120,19 +120,68 @@ If you ever see one staged, unstage it (`git rm --cached`) and rotate the SAP se
    `build` script builds auth before it.
 4. `npm install` at the root to wire the workspace symlink + refresh the lockfile.
 
-## Publishing
+## Commits, CI & releasing
 
-Versions are **per package**. Build, bump the one you changed, publish that workspace:
+### Commit messages (Conventional Commits)
 
-```bash
-npm run build
-npm version patch -w sap-roadmap-mcp
-npm publish -w sap-roadmap-mcp
-```
+Format: `type(scope): subject` — e.g. `fix(auth): refresh expired SSO cookie`. Enforced locally by a
+husky `commit-msg` hook (`commitlint`) and on PRs by the `commitlint` CI job. Configured in
+`commitlint.config.js`.
 
-When you change `@marianfoo/sap-mcp-auth`, **publish it first**, then bump dependents only if the
-change is breaking (they pin `^0.1.0`). Each server's `files` array publishes `dist/` + docs only —
-source, tests, and dev scripts stay in the repo.
+- **Types:** `feat`, `fix`, `perf`, `refactor`, `docs`, `test`, `build`, `ci`, `chore`, `revert`,
+  `style` (the Conventional Commits set).
+- **Scope is optional** but, when present, must be one of: `auth`, `api-hub`, `roadmap`, `notes`
+  (the four packages), or `deps` / `release` / `ci` / `repo`. A bogus scope fails the lint.
+- `feat` / `fix` show up in the changelog; a `feat!:` or `BREAKING CHANGE:` footer bumps the minor
+  while packages are pre-1.0 (`bump-minor-pre-major`).
+
+release-please routes each commit to a package **by the files it touches** (`packages/<pkg>/…`), so
+`fix(auth): …` editing `packages/auth/**` bumps the auth package. The scope is for humans + lint; the
+path is what drives the version.
+
+### CI — `.github/workflows/ci.yml`
+
+On every PR and push to `main`: `npm ci` → `npm run build` (compiles all four with tsc = the real
+type-check) → `npm run typecheck`, on Node 20 and 22. The servers' own `test` scripts hit **live SAP**
+and are deliberately **not** run in CI. PRs also get their commit messages linted (release-please's
+own PRs are skipped).
+
+### Releasing — `.github/workflows/release.yml` (release-please)
+
+Fully automated, per package:
+
+1. Land conventional commits on `main` (via PRs).
+2. **release-please** maintains a *release PR per changed package* — it bumps that package's
+   `version`, updates its `CHANGELOG.md`, and (on merge) tags it
+   `‹component›-v‹x.y.z›` (e.g. `sap-api-hub-mcp-v0.1.2`). Config:
+   `release-please-config.json` + `.release-please-manifest.json` (manifest/monorepo mode).
+3. Merging a release PR triggers the `publish-npm` job, which builds the repo and publishes **only the
+   packages that were just released** (`paths_released`) to npm with **provenance**.
+
+You never run `npm version` / `npm publish` by hand — review and merge the release PR.
+
+### One-time setup: npm OIDC trusted publishing
+
+`publish-npm` uses **OIDC trusted publishing** (no `NPM_TOKEN` secret). For each of the four packages,
+configure a trusted publisher once on npmjs.com → *Package → Settings → Trusted Publishers → GitHub
+Actions*:
+
+- Repository: `marianfoo/sap-mcp-servers`
+- Workflow: `release.yml`
+- Environment: *(leave blank)*
+
+**Token fallback** (if you'd rather not use OIDC): add an `NPM_TOKEN` repo secret and change the
+publish step to set `NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}` (drop `--provenance`).
+
+> **First run / bootstrap:** because the packages already exist on npm and the manifest is seeded with
+> their current versions, release-please's first pass may open PRs just to establish the baseline
+> `‹component›-v‹version›` tags. Merge them; subsequent releases are normal.
+
+### Manual publish (escape hatch)
+
+If you must publish outside the workflow: `npm run build`, then `npm publish --workspace packages/<pkg>
+--access public` (publish `@marianfoo/sap-mcp-auth` first if it changed). Each package's `files` array
+ships `dist/` + docs only.
 
 ## Licensing
 

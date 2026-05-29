@@ -65,18 +65,21 @@ Never commit credentials, `.env`, `*.pfx`, or `*-token-cache.json` — they are 
 - Watch/dev a server: `npm run dev -w sap-api-hub-mcp`.
 - Typecheck / test everything: `npm run typecheck` / `npm test`.
 
-## Publishing
+## Contributing & commit messages
 
-Versions are **per package**. Build, bump the one you changed, then publish that workspace:
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/) — `type(scope): subject`,
+e.g. `fix(auth): refresh expired SSO cookie`. A husky `commit-msg` hook + a CI job lint this. Allowed
+scopes: `auth`, `api-hub`, `roadmap`, `notes`, `deps`, `release`, `ci`, `repo`. See
+**[AGENTS.md](AGENTS.md)** for the full contributor/dev guide.
 
-```bash
-npm run build
-npm version patch -w @marianfoo/sap-mcp-auth
-npm publish -w @marianfoo/sap-mcp-auth
-```
+## Releases
 
-When you change `@marianfoo/sap-mcp-auth`, publish it first; bump the dependents' dependency range
-only if you introduce a breaking change (they pin `^0.1.0`).
+Releasing is automated with **[release-please](https://github.com/googleapis/release-please)** —
+landing conventional commits on `main` opens a per-package "release PR"; merging it bumps that
+package's version + `CHANGELOG`, tags it (e.g. `sap-api-hub-mcp-v0.1.2`), and the
+[`release.yml`](.github/workflows/release.yml) workflow publishes it to npm with provenance (OIDC).
+No manual `npm version` / `npm publish`. Setup details and the npm trusted-publisher one-time config
+are in **[AGENTS.md → Commits, CI & releasing](AGENTS.md)**.
 
 ## Licensing
 
