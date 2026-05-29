@@ -1,6 +1,6 @@
 # SAP API Hub MCP Server
 
-> Part of the [**sap-mcp-servers**](../../README.md) monorepo (npm workspaces) — published to npm independently as `sap-api-hub-mcp`.
+> Part of the [**sap-mcp-servers**](../../README.md) monorepo (npm workspaces) — published to npm independently as `sap-api-hub-mcp` with [build provenance](https://docs.npmjs.com/generating-provenance-statements).
 
 TypeScript MCP server for read-only SAP Business Accelerator Hub catalog access.
 
