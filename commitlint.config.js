@@ -27,5 +27,8 @@ export default {
     ],
     // Don't fail on long lines in the body (URLs, stack traces, etc.).
     'body-max-line-length': [0, 'always'],
+    // Subject capitalization is stylistic and fights Dependabot's "Bump …"
+    // messages — disable it. Type + scope are what we actually enforce.
+    'subject-case': [0],
   },
 };
