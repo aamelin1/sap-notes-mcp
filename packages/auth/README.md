@@ -1,6 +1,6 @@
 # @marianfoo/sap-mcp-auth
 
-> Part of the [**sap-mcp-servers**](../../README.md) monorepo (npm workspaces) — published to npm independently as `@marianfoo/sap-mcp-auth`.
+> Part of the [**sap-mcp-servers**](../../README.md) monorepo (npm workspaces) — published to npm independently as `@marianfoo/sap-mcp-auth` with [build provenance](https://docs.npmjs.com/generating-provenance-statements).
 
 Shared SAP IAS (`accounts.sap.com`) browser-login and session module for SAP MCP servers.
 
