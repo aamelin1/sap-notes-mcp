@@ -1,6 +1,6 @@
 # SAP Note Search MCP Server
 
-> Part of the [**sap-mcp-servers**](../../README.md) monorepo (npm workspaces) — published to npm independently as `sap-note-search-mcp`.
+> Part of the [**sap-mcp-servers**](../../README.md) monorepo (npm workspaces) — published to npm independently as `sap-note-search-mcp` with [build provenance](https://docs.npmjs.com/generating-provenance-statements).
 
 > **MCP server for searching and retrieving SAP Notes / KB articles with full metadata extraction**
 
