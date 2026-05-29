@@ -3,7 +3,6 @@
   "bump-minor-pre-major": true,
   "bump-patch-for-minor-pre-major": true,
   "include-component-in-tag": true,
-  "separate-pull-requests": true,
   "changelog-sections": [
     { "type": "feat", "section": "Features" },
     { "type": "fix", "section": "Bug Fixes" },
@@ -22,22 +21,26 @@
     "packages/auth": {
       "release-type": "node",
       "component": "sap-mcp-auth",
-      "package-name": "@marianfoo/sap-mcp-auth"
+      "package-name": "@marianfoo/sap-mcp-auth",
+      "release-as": "0.1.1"
     },
     "packages/api-hub": {
       "release-type": "node",
       "component": "sap-api-hub-mcp",
-      "package-name": "sap-api-hub-mcp"
+      "package-name": "sap-api-hub-mcp",
+      "release-as": "0.1.2"
     },
     "packages/roadmap": {
       "release-type": "node",
       "component": "sap-roadmap-mcp",
-      "package-name": "sap-roadmap-mcp"
+      "package-name": "sap-roadmap-mcp",
+      "release-as": "0.1.2"
     },
     "packages/notes": {
       "release-type": "node",
       "component": "sap-note-search-mcp",
-      "package-name": "sap-note-search-mcp"
+      "package-name": "sap-note-search-mcp",
+      "release-as": "0.3.2"
     }
   }
 }
