@@ -21,26 +21,22 @@
     "packages/auth": {
       "release-type": "node",
       "component": "sap-mcp-auth",
-      "package-name": "@marianfoo/sap-mcp-auth",
-      "release-as": "0.1.1"
+      "package-name": "@marianfoo/sap-mcp-auth"
     },
     "packages/api-hub": {
       "release-type": "node",
       "component": "sap-api-hub-mcp",
-      "package-name": "sap-api-hub-mcp",
-      "release-as": "0.1.2"
+      "package-name": "sap-api-hub-mcp"
     },
     "packages/roadmap": {
       "release-type": "node",
       "component": "sap-roadmap-mcp",
-      "package-name": "sap-roadmap-mcp",
-      "release-as": "0.1.2"
+      "package-name": "sap-roadmap-mcp"
     },
     "packages/notes": {
       "release-type": "node",
       "component": "sap-note-search-mcp",
-      "package-name": "sap-note-search-mcp",
-      "release-as": "0.3.2"
+      "package-name": "sap-note-search-mcp"
     }
   }
 }
