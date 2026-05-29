@@ -1,6 +1,6 @@
 # SAP Roadmap MCP Server
 
-> Part of the [**sap-mcp-servers**](../../README.md) monorepo (npm workspaces) — published to npm independently as `sap-roadmap-mcp`.
+> Part of the [**sap-mcp-servers**](../../README.md) monorepo (npm workspaces) — published to npm independently as `sap-roadmap-mcp` with [build provenance](https://docs.npmjs.com/generating-provenance-statements).
 
 MCP server for SAP Road Map Explorer (`roadmaps.sap.com`) using cookie-backed API calls. Authentication can use SAP username/password or SAP Passport/PFX certificate auth. In `AUTH_METHOD=auto`, username/password is preferred when both password and PFX are configured, matching `mcp-sap-notes`. The browser is used only to authenticate and collect SAP session cookies; all Roadmap data retrieval uses HTTP API endpoints.
 
