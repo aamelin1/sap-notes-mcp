@@ -1,0 +1,42 @@
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+*.tsbuildinfo
+
+# Environment & secrets
+.env
+.env.*
+*.env
+
+# SAP certificates, tokens, sessions — NEVER commit
+certs/
+*.pfx
+*.p12
+*.pem
+*.key
+*.cer
+*.crt
+*-token-cache.json
+token-cache.json
+storageState.json
+sso-storage-state.json
+.playwright-mcp/
+
+# Debug artifacts
+debug-*.png
+debug-*.js
+
+# Logs
+*.log
+logs/
+
+# Packing
+*.tgz
+
+# Editor / OS
+.DS_Store
+.idea/
+.vscode/
+combined-project-files.txt

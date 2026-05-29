@@ -1,0 +1,67 @@
+{
+  "name": "@marianfoo/sap-mcp-auth",
+  "version": "0.1.0",
+  "description": "Shared SAP IAS browser login and session module for SAP MCP servers (Playwright-based).",
+  "type": "module",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "package.json"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rimraf dist",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc --noEmit",
+    "prepack": "npm run clean && npm run build",
+    "prepublishOnly": "npm run clean && npm run build",
+    "pack:check": "npm pack --dry-run"
+  },
+  "keywords": [
+    "sap",
+    "mcp",
+    "model-context-protocol",
+    "authentication",
+    "playwright",
+    "ias",
+    "sso"
+  ],
+  "author": "marianfoo",
+  "license": "Apache-2.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marianfoo/sap-mcp-servers.git",
+    "directory": "packages/auth"
+  },
+  "homepage": "https://github.com/marianfoo/sap-mcp-servers/tree/main/packages/auth#readme",
+  "bugs": {
+    "url": "https://github.com/marianfoo/sap-mcp-servers/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "peerDependencies": {
+    "playwright": ">=1.40 <2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "playwright": "^1.58.0",
+    "rimraf": "^6.0.0",
+    "typescript": "^5.8.0",
+    "vitest": "^2.1.0"
+  }
+}

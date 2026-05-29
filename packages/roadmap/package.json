@@ -1,0 +1,76 @@
+{
+  "name": "sap-roadmap-mcp",
+  "version": "0.1.1",
+  "description": "MCP server for SAP Road Map Explorer search and filters behind SAP authentication",
+  "main": "dist/mcp-server.js",
+  "types": "dist/mcp-server.d.ts",
+  "type": "module",
+  "bin": {
+    "sap-roadmap-mcp": "dist/mcp-server.js"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/mcp-server.d.ts",
+      "import": "./dist/mcp-server.js"
+    },
+    "./package.json": "./package.json"
+  },
+  "files": [
+    "dist",
+    "scripts/postinstall.mjs",
+    "README.md",
+    "env.example",
+    "LICENSE",
+    "package.json"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsx watch src/mcp-server.ts",
+    "serve": "node dist/mcp-server.js",
+    "serve:stdio": "MCP_TRANSPORT=stdio node dist/mcp-server.js",
+    "serve:http": "MCP_TRANSPORT=streamable-http node dist/mcp-server.js",
+    "auth:login": "HEADFUL=true AUTH_LOGIN_ONLY=true node dist/mcp-server.js",
+    "start": "npm run build && npm run serve",
+    "export:workzone": "tsx scripts/export-workzone.ts",
+    "clean": "rimraf dist",
+    "install:browsers": "playwright install chromium",
+    "postinstall": "node scripts/postinstall.mjs",
+    "prepack": "npm run clean && npm run build",
+    "prepublishOnly": "npm run prepack",
+    "pack:check": "npm pack --dry-run"
+  },
+  "keywords": [
+    "sap",
+    "roadmap",
+    "mcp",
+    "model-context-protocol"
+  ],
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marianfoo/sap-mcp-servers.git",
+    "directory": "packages/roadmap"
+  },
+  "homepage": "https://github.com/marianfoo/sap-mcp-servers/tree/main/packages/roadmap#readme",
+  "bugs": {
+    "url": "https://github.com/marianfoo/sap-mcp-servers/issues"
+  },
+  "dependencies": {
+    "@marianfoo/sap-mcp-auth": "^0.1.0",
+    "@modelcontextprotocol/sdk": "^1.28.0",
+    "dotenv": "^16.4.7",
+    "pino": "^9.14.0",
+    "pino-pretty": "^11.3.0",
+    "playwright": "^1.58.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "rimraf": "^6.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.8.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

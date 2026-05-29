@@ -1,0 +1,12 @@
+node_modules/
+dist/
+.env
+.env.*
+token-cache.json
+roadmap-token-cache.json
+debug-*.png
+*.tgz
+docs/workzone-roadmap.md
+.playwright-mcp/
+roadmap-snapshot.md
+roadmap-search-*.txt

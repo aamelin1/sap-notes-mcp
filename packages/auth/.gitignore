@@ -1,0 +1,13 @@
+node_modules/
+dist/
+*.tgz
+*.log
+.env
+.env.*
+*-token-cache.json
+token-cache.json
+sso-storage-state.json
+*.pfx
+*.p12
+debug-*.png
+.DS_Store

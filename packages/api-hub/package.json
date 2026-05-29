@@ -1,0 +1,71 @@
+{
+  "name": "sap-api-hub-mcp",
+  "version": "0.1.1",
+  "description": "MCP server for SAP Business Accelerator Hub catalog, specs, and documentation behind SAP authentication",
+  "author": "marianfoo",
+  "license": "Apache-2.0",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marianfoo/sap-mcp-servers.git",
+    "directory": "packages/api-hub"
+  },
+  "bugs": {
+    "url": "https://github.com/marianfoo/sap-mcp-servers/issues"
+  },
+  "homepage": "https://github.com/marianfoo/sap-mcp-servers/tree/main/packages/api-hub#readme",
+  "main": "dist/mcp-server.js",
+  "type": "module",
+  "exports": {
+    ".": "./dist/mcp-server.js"
+  },
+  "bin": {
+    "sap-api-hub-mcp": "dist/mcp-server.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "PUBLISHING.md",
+    "env.example",
+    "LICENSE",
+    "package.json"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "clean": "rimraf dist",
+    "dev": "tsx watch src/mcp-server.ts",
+    "serve": "node dist/mcp-server.js",
+    "serve:stdio": "MCP_TRANSPORT=stdio node dist/mcp-server.js",
+    "serve:http": "MCP_TRANSPORT=streamable-http node dist/mcp-server.js",
+    "start": "npm run build && npm run serve",
+    "prepack": "npm run clean && npm run build",
+    "prepublishOnly": "npm run build",
+    "publish:check": "npm pack --dry-run"
+  },
+  "keywords": [
+    "sap",
+    "api-hub",
+    "business-accelerator-hub",
+    "mcp",
+    "model-context-protocol",
+    "playwright",
+    "mcp-server"
+  ],
+  "dependencies": {
+    "@marianfoo/sap-mcp-auth": "^0.1.0",
+    "@modelcontextprotocol/sdk": "^1.28.0",
+    "dotenv": "^16.4.7",
+    "pino": "^9.14.0",
+    "pino-pretty": "^11.3.0",
+    "playwright": "^1.58.0",
+    "zod": "^4.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.15.0",
+    "rimraf": "^6.0.0",
+    "tsx": "^4.21.0",
+    "typescript": "^5.8.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

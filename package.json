@@ -1,0 +1,38 @@
+{
+  "name": "sap-mcp-servers",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Monorepo for SAP MCP servers (API Hub, Road Map Explorer, SAP Notes) and their shared SAP authentication module.",
+  "license": "Apache-2.0",
+  "author": "marianfoo",
+  "type": "module",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marianfoo/sap-mcp-servers.git"
+  },
+  "homepage": "https://github.com/marianfoo/sap-mcp-servers#readme",
+  "bugs": {
+    "url": "https://github.com/marianfoo/sap-mcp-servers/issues"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "workspaces": [
+    "packages/auth",
+    "packages/api-hub",
+    "packages/roadmap",
+    "packages/notes"
+  ],
+  "scripts": {
+    "build": "npm run build -w @marianfoo/sap-mcp-auth && npm run build -w sap-api-hub-mcp -w sap-roadmap-mcp -w sap-note-search-mcp",
+    "build:auth": "npm run build -w @marianfoo/sap-mcp-auth",
+    "clean": "npm run clean --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "test": "npm run test --workspaces --if-present",
+    "install:browsers": "playwright install chromium"
+  },
+  "devDependencies": {
+    "rimraf": "^6.0.0",
+    "typescript": "^5.8.0"
+  }
+}
