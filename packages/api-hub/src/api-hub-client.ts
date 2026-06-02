@@ -27,6 +27,16 @@ const CATEGORY_ROUTE_PREFIX: Record<string, string> = {
 export class SapApiHubClient {
   constructor(private config: ServerConfig) {}
 
+  async validateSession(cookie: string): Promise<boolean> {
+    try {
+      await this.getJson('/api/1.0/containergroup/ContentTypes?$expand=containers($expand=logo)', cookie);
+      return true;
+    } catch (error) {
+      logger.warn('API Hub session validation failed', error);
+      return false;
+    }
+  }
+
   async categories(cookie: string): Promise<{ categories: ApiHubCategory[]; raw: unknown }> {
     const raw = await this.getJson('/api/1.0/containergroup/ContentTypes?$expand=containers($expand=logo)', cookie);
     const containers = collectContainers(raw);
