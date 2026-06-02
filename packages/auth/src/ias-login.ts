@@ -93,9 +93,18 @@ export function isAuthUrl(url: string): boolean {
 }
 
 async function openAuthPage(page: Page, url: string, label: string, logger: Logger): Promise<void> {
-  await page.goto(url, { waitUntil: 'domcontentloaded', timeout: 45000 });
-  await page.waitForLoadState('networkidle', { timeout: 15000 }).catch(() => {
-    logger.warn(`${label} page did not fully settle; continuing with login detection`);
+  try {
+    await page.goto(url, { waitUntil: 'commit', timeout: 45000 });
+  } catch (error) {
+    const currentUrl = page.url();
+    if (!currentUrl || currentUrl === 'about:blank') {
+      throw error;
+    }
+    logger.warn(`${label} navigation did not settle at ${currentUrl}; continuing with login detection`, error);
+  }
+
+  await page.waitForLoadState('domcontentloaded', { timeout: 15000 }).catch(() => {
+    logger.warn(`${label} DOMContentLoaded wait timed out; continuing with login detection`);
   });
 }
 
