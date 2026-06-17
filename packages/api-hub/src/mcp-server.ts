@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 import { randomUUID } from 'node:crypto';
+import { realpathSync } from 'fs';
 import { createServer, type IncomingMessage, type Server as HttpServer, type ServerResponse } from 'node:http';
 import { resolve } from 'path';
 import { fileURLToPath } from 'url';
@@ -547,15 +548,17 @@ function numberValue(value: unknown): number | undefined {
   return typeof value === 'number' ? value : undefined;
 }
 
-const isDirectRun = (() => {
+function isDirectRun(): boolean {
   try {
-    return fileURLToPath(import.meta.url) === resolve(process.argv[1] || '');
+    const thisFile = realpathSync(fileURLToPath(import.meta.url));
+    const invoked = process.argv[1] ? realpathSync(resolve(process.argv[1])) : '';
+    return thisFile === invoked;
   } catch {
     return false;
   }
-})();
+}
 
-if (isDirectRun) {
+if (isDirectRun()) {
   const server = new SapApiHubMcpServer();
 
   const shutdown = async () => {
