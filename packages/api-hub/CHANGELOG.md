@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.1.4](https://github.com/marianfoo/sap-mcp-servers/compare/sap-api-hub-mcp-v0.1.3...sap-api-hub-mcp-v0.1.4) (2026-06-17)
+
+
+### Bug Fixes
+
+* symlinked MCP bin startup ([#17](https://github.com/marianfoo/sap-mcp-servers/issues/17)) ([74cfac0](https://github.com/marianfoo/sap-mcp-servers/commit/74cfac0620c5db8caf68769d329162f977cbd141))
+
 ## [0.1.3](https://github.com/marianfoo/sap-mcp-servers/compare/sap-api-hub-mcp-v0.1.2...sap-api-hub-mcp-v0.1.3) (2026-06-02)
 
 
