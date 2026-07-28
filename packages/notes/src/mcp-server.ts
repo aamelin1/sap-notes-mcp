@@ -10,6 +10,7 @@ import type { SapWebAuthenticator } from '@marianfoo/sap-mcp-auth';
 import { createNotesAuthenticator } from './auth.js';
 import { SapNotesApiClient } from './sap-notes-api.js';
 import { logger } from './logger.js';
+import { ensureChromiumReady } from './ensure-browser.js';
 import {
   NoteSearchInputSchema,
   NoteSearchOutputSchema,
@@ -144,12 +145,13 @@ class SapNoteMcpServer {
    * If the call fails with a session/auth error, invalidates the token and retries once.
    */
   private async withAuthRetry<T>(fn: (token: string) => Promise<T>): Promise<T> {
+    await ensureChromiumReady();
     const { cookieHeader } = await this.authenticator.ensureSession();
     try {
       return await fn(cookieHeader);
     } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      if (msg.includes('SESSION_EXPIRED') || msg.includes('401') || msg.includes('Unauthorized') || msg.includes('session expired')) {
+      const msg = (error instanceof Error ? error.message : String(error)).toLowerCase();
+      if (msg.includes('session_expired') || msg.includes('401') || msg.includes('unauthorized') || msg.includes('session expired')) {
         logger.warn('Session expired, re-authenticating and retrying...');
         this.authenticator.invalidateAuth();
         const { cookieHeader: newCookie } = await this.authenticator.ensureSession();
@@ -365,6 +367,14 @@ class SapNoteMcpServer {
    */
   async start(): Promise<void> {
     logger.warn('🚀 Starting SAP Note MCP Server');
+
+    // Begin Chromium provisioning in the background so a first-run download
+    // overlaps with client startup instead of delaying the first tool call.
+    // Errors are not fatal here: withAuthRetry() awaits (and retries) it and
+    // will surface a clear error message on the actual tool call.
+    ensureChromiumReady().catch(error =>
+      logger.error(`Chromium provisioning failed (will retry on first tool call): ${error instanceof Error ? error.message : String(error)}`)
+    );
     
     try {
       // Create stdio transport

@@ -1,4 +1,4 @@
-import { existsSync, mkdirSync, readFileSync } from 'fs';
+import { existsSync, mkdirSync, readFileSync, rmSync } from 'fs';
 import { dirname } from 'path';
 import type { BrowserContext, Cookie } from 'playwright';
 import type { CachedToken, Logger } from './types.js';
@@ -45,6 +45,16 @@ export function loadSharedSsoToken(
   } catch (error) {
     logger.warn('Failed to load shared SAP SSO storage state', error);
     return null;
+  }
+}
+
+export function removeSsoStorageState(file: string | undefined, logger: Logger): void {
+  try {
+    if (!file || !existsSync(file)) return;
+    rmSync(file);
+    logger.warn(`Removed shared SAP SSO browser state ${file}`);
+  } catch (error) {
+    logger.warn('Failed to remove shared SAP SSO browser state', error);
   }
 }
 

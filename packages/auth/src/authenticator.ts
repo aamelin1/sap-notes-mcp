@@ -14,7 +14,7 @@ import type { AuthConfig, AuthSession, CachedToken, Logger, ResolvedAuthMethod, 
 import { AuthenticationError, BrowserNotFoundError, CertificateLoadError } from './errors.js';
 import { defaultLogger } from './logger.js';
 import { loadCachedToken, removeCachedToken, saveCachedToken } from './cookie-cache.js';
-import { loadSharedSsoToken, saveSharedSsoStorageState } from './sso-storage-state.js';
+import { loadSharedSsoToken, removeSsoStorageState, saveSharedSsoStorageState } from './sso-storage-state.js';
 import { selectCookies, serializeCookies } from './cookie-scope.js';
 import { performCertificateNavigation, performInteractiveLogin, performPasswordLogin } from './ias-login.js';
 
@@ -67,6 +67,10 @@ export class SapWebAuthenticator {
     this.authState = {};
     this.skipSharedSsoOnce = true;
     removeCachedToken(this.config.tokenCacheFile, this.log);
+    // The shared browser storage state must die together with the cookie cache:
+    // a stale/logged-out storage state left behind poisons both the SSO fast path
+    // and the fresh-login browser context (it would be loaded as storageState).
+    removeSsoStorageState(this.config.ssoStorageStateFile, this.log);
   }
 
   /** Force a fresh login (used by HEADFUL "login only" flows to mint shared SSO state). */

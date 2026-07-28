@@ -283,6 +283,11 @@ export class SapNotesApiClient {
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage.includes('SESSION_EXPIRED')) {
+          // Do NOT fall back: the HTTP fallbacks would hit the same dead session
+          // and return a useless stub. Let withAuthRetry() re-login and retry.
+          throw error;
+        }
         logger.warn(`⚠️ Playwright approach failed: ${errorMessage}, trying HTTP fallbacks`);
       }
 
@@ -774,7 +779,7 @@ export class SapNotesApiClient {
       if (wasRedirectedToLogin || currentUrl.includes('authentication.') || currentUrl.includes('saml/login')) {
         logger.error('❌ Session expired or cookies invalid - redirected to login page');
         logger.error('💡 Please run fresh authentication to update cached cookies');
-        throw new Error('Session expired - authentication required. Run test:auth to refresh credentials.');
+        throw new Error('SESSION_EXPIRED: redirected to login page - authentication required');
       }
 
       // Enhanced debugging for page state and timing
@@ -976,7 +981,7 @@ export class SapNotesApiClient {
       logger.error('❌ Failed to get Coveo token:', error);
       
       // If session expired, throw special error and close browser to force re-auth
-      if (error instanceof Error && error.message.includes('Session expired')) {
+      if (error instanceof Error && (error.message.includes('SESSION_EXPIRED') || error.message.includes('Session expired'))) {
         logger.warn('🔄 Session expired detected - closing browser to force fresh authentication');
         if (this.browser) {
           await this.browser.close().catch(() => {});
@@ -1435,22 +1440,12 @@ export class SapNotesApiClient {
       logger.debug('Raw note response is not JSON, checking for HTML redirect/content');
     }
 
-    // Check if this is a redirect page that indicates the note exists
+    // A login-redirect page here means our session is dead. Previously this
+    // returned a "requires browser access" stub as a SUCCESSFUL result, which
+    // masked the expiry from withAuthRetry() and made self-healing impossible.
     if (responseText.includes('fragmentAfterLogin') || responseText.includes('document.cookie')) {
-      logger.debug('Detected redirect page, note likely exists but requires browser navigation');
-      
-      // If we got a response for a valid note ID, create a basic result
-      if (noteId && noteId.match(/^\d{6,8}$/)) {
-        return {
-          id: noteId,
-          title: `SAP Note ${noteId}`,
-          summary: 'Note found via raw API - full content requires browser access',
-          content: `This SAP Note exists but its content requires browser navigation to access.\n\nTo view the complete note content:\n1. Visit: https://launchpad.support.sap.com/#/notes/${noteId}\n2. Or access through: https://me.sap.com with your SAP credentials\n\nThe note was successfully located but content extraction requires additional authentication steps.`,
-          language: 'EN',
-          releaseDate: 'Unknown',
-          url: `https://launchpad.support.sap.com/#/notes/${noteId}`
-        };
-      }
+      logger.warn('Raw notes API returned a login redirect - treating as expired session');
+      throw new Error('SESSION_EXPIRED: SAP returned the sign-in redirect instead of note content');
     }
 
     // Fallback to HTML parsing
@@ -2057,12 +2052,28 @@ export class SapNotesApiClient {
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       logger.error(`❌ Playwright note extraction failed: ${errorMessage}`);
+      if (errorMessage.includes('SESSION_EXPIRED')) {
+        // Close the persistent browser so the retry after re-login builds a fresh
+        // context with fresh cookies instead of reusing the dead session. Nulling
+        // browserContext also prevents the finally below from overwriting the
+        // shared storage-state file with a logged-out state (the old bug that
+        // made expired sessions unrecoverable without manual file deletion).
+        logger.warn('🔄 Session expired - closing persistent browser to force fresh authentication');
+        if (this.browser) {
+          await this.browser.close().catch(() => {});
+          this.browser = null;
+          this.browserContext = null;
+        }
+        throw error;
+      }
       throw new Error(`Playwright extraction failed: ${errorMessage}`);
     } finally {
       // Only close the page, keep the persistent browser alive
       if (page) {
         await page.close().catch(() => {});
       }
+      // Persist browser state only while the session is believed to be healthy
+      // (browserContext is nulled above when the session expired).
       await this.savePersistentStorageState();
     }
   }

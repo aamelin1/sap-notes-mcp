@@ -12,6 +12,7 @@ import type { SapWebAuthenticator } from '@marianfoo/sap-mcp-auth';
 import { createNotesAuthenticator } from './auth.js';
 import { SapNotesApiClient } from './sap-notes-api.js';
 import { logger } from './logger.js';
+import { ensureChromiumReady } from './ensure-browser.js';
 import {
   NoteSearchInputSchema,
   NoteSearchOutputSchema,
@@ -210,12 +211,13 @@ class HttpSapNoteMcpServer {
    * Execute an API call with automatic auth retry on session expiry.
    */
   private async withAuthRetry<T>(fn: (token: string) => Promise<T>): Promise<T> {
+    await ensureChromiumReady();
     const { cookieHeader } = await this.authenticator.ensureSession();
     try {
       return await fn(cookieHeader);
     } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      if (msg.includes('SESSION_EXPIRED') || msg.includes('401') || msg.includes('Unauthorized') || msg.includes('session expired')) {
+      const msg = (error instanceof Error ? error.message : String(error)).toLowerCase();
+      if (msg.includes('session_expired') || msg.includes('401') || msg.includes('unauthorized') || msg.includes('session expired')) {
         logger.warn('Session expired, re-authenticating and retrying...');
         this.authenticator.invalidateAuth();
         const { cookieHeader: newCookie } = await this.authenticator.ensureSession();
@@ -476,6 +478,10 @@ class HttpSapNoteMcpServer {
     const port = process.env.HTTP_PORT || 3123;
 
     logger.warn('🚀 Starting HTTP SAP Note MCP Server');
+
+    ensureChromiumReady().catch(error =>
+      logger.error(`Chromium provisioning failed (will retry on first tool call): ${error instanceof Error ? error.message : String(error)}`)
+    );
     logger.warn(`📡 Server will be available at: http://localhost:${port}/mcp`);
 
     return new Promise((resolve) => {
