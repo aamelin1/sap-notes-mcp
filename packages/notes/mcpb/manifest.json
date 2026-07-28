@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "sap-notes",
   "display_name": "SAP Notes",
-  "version": "0.4.1",
+  "version": "0.4.4",
   "description": "Search and read SAP Notes / KBAs from me.sap.com using your own S-user.",
   "long_description": "MCP server for searching and retrieving SAP Notes with full content and metadata (validity, support packages, corrections). Fork of marianfoo/sap-mcp-servers with self-healing re-authentication on expired sessions and automatic one-time Chromium download on first run (~170 MB). Requires an SAP S-user with access to me.sap.com.",
   "author": {

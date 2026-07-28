@@ -41,53 +41,17 @@ export function ensureChromiumReady(): Promise<void> {
   return provisionPromise;
 }
 
-function installedExecutable(): string | null {
-  try {
-    const p = chromium.executablePath();
-    return p && existsSync(p) ? p : null;
-  } catch {
-    return null;
-  }
-}
+/** Both binaries are required: full Chromium for headful (MFA) logins and
+ *  chromium-headless-shell, which Playwright uses for headless mode. */
+const REQUIRED_BROWSERS = ['chromium', 'chromium-headless-shell'];
 
-async function provision(): Promise<void> {
-  const existing = installedExecutable();
-  if (existing) {
-    logger.debug(`Chromium already installed: ${existing}`);
-    return;
-  }
-
-  logger.warn('Chromium for Playwright not found — downloading it now (one-time, ~200 MB). This may take a few minutes...');
-
-  try {
-    await installInProcess();
-  } catch (error) {
-    const msg = error instanceof Error ? error.message : String(error);
-    logger.warn(`In-process Chromium install failed (${msg}); falling back to the Playwright CLI`);
-    await installViaCli();
-  }
-
-  const installed = installedExecutable();
-  if (!installed) {
-    throw new Error(
-      'Chromium download reported success but the executable was not found. ' +
-      'Try running "npx playwright install chromium" manually, or set PLAYWRIGHT_BROWSERS_PATH ' +
-      'if your browsers live in a non-default location.'
-    );
-  }
-  logger.warn(`Chromium download completed: ${installed}`);
-}
-
-async function installInProcess(): Promise<void> {
+function loadRegistry(): any {
   const requireFromHere = createRequire(import.meta.url);
-  // Resolve playwright-core exactly the way the installed playwright package would.
   const requireFromPlaywright = createRequire(requireFromHere.resolve('playwright/package.json'));
   let coreBundle: any;
   try {
-    // exports map allows the extensionless specifier...
     coreBundle = requireFromPlaywright('playwright-core/lib/coreBundle');
   } catch {
-    // ...and an absolute file path bypasses the exports map entirely.
     const pwCoreDir = dirname(requireFromPlaywright.resolve('playwright-core/package.json'));
     coreBundle = requireFromPlaywright(join(pwCoreDir, 'lib', 'coreBundle.js'));
   }
@@ -95,8 +59,84 @@ async function installInProcess(): Promise<void> {
   if (!registry || typeof registry.install !== 'function' || typeof registry.findExecutable !== 'function') {
     throw new Error('playwright registry API not found (playwright internals changed?)');
   }
-  const executable = registry.findExecutable('chromium');
-  if (!executable) throw new Error('chromium is not known to the playwright registry');
+  return registry;
+}
+
+function missingBrowsers(): string[] {
+  try {
+    const registry = loadRegistry();
+    return REQUIRED_BROWSERS.filter(name => {
+      const exe = registry.findExecutable(name);
+      const p = exe?.executablePath?.();
+      return !p || !existsSync(p);
+    });
+  } catch {
+    // Registry unavailable — fall back to checking full Chromium only.
+    try {
+      const p = chromium.executablePath();
+      return p && existsSync(p) ? [] : [...REQUIRED_BROWSERS];
+    } catch {
+      return [...REQUIRED_BROWSERS];
+    }
+  }
+}
+
+async function provision(): Promise<void> {
+  const missing = missingBrowsers();
+  if (missing.length === 0) {
+    logger.debug('Chromium and headless shell already installed');
+    return;
+  }
+
+  logger.warn(`Playwright browsers missing (${missing.join(', ')}) — downloading now (one-time, ~200-300 MB). This may take a few minutes...`);
+
+  // Strategy order matters: in-process needs no child process at all;
+  // a node found on PATH is a real node binary; process.execPath comes last
+  // because inside Claude Desktop it is an Electron binary that may refuse
+  // to run as node (crashes with SIGTRAP before reaching the CLI).
+  const failures: string[] = [];
+
+  try {
+    await installInProcess();
+  } catch (error) {
+    failures.push(`in-process: ${describe(error)}`);
+    logger.warn(`In-process Chromium install failed (${describe(error)}); trying the Playwright CLI`);
+
+    const nodeCandidates = [...findPathNodes(), process.execPath];
+    let installed = false;
+    for (const nodeBin of nodeCandidates) {
+      try {
+        await installViaCli(nodeBin);
+        installed = true;
+        break;
+      } catch (cliError) {
+        failures.push(`CLI via ${nodeBin}: ${describe(cliError)}`);
+        logger.warn(`Chromium install via ${nodeBin} failed (${describe(cliError)})`);
+      }
+    }
+    if (!installed) {
+      throw new Error(
+        `Chromium download failed. If you are behind a corporate proxy, set HTTPS_PROXY or PLAYWRIGHT_DOWNLOAD_HOST. ` +
+        `Attempts: ${failures.join(' | ')}`
+      );
+    }
+  }
+
+  const stillMissing = missingBrowsers();
+  if (stillMissing.length > 0) {
+    throw new Error(
+      `Browser download reported success but ${stillMissing.join(', ')} still not found. ` +
+      'Try running "npx playwright install chromium" manually, or set PLAYWRIGHT_BROWSERS_PATH ' +
+      'if your browsers live in a non-default location.'
+    );
+  }
+  logger.warn('Playwright browser download completed');
+}
+
+async function installInProcess(): Promise<void> {
+  const registry = loadRegistry();
+  const executables = REQUIRED_BROWSERS.map(name => registry.findExecutable(name)).filter(Boolean);
+  if (executables.length === 0) throw new Error('chromium is not known to the playwright registry');
 
   // Divert non-protocol stdout writes (download progress) to the stderr logger.
   const realWrite = process.stdout.write.bind(process.stdout);
@@ -115,18 +155,34 @@ async function installInProcess(): Promise<void> {
 
   process.stdout.write = filteredWrite;
   try {
-    await registry.install([executable], false);
+    await registry.install(executables, false);
   } finally {
     process.stdout.write = realWrite;
   }
 }
 
-function installViaCli(): Promise<void> {
+function describe(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+/** Real node binaries on PATH (unlike process.execPath, which may be Electron). */
+function findPathNodes(): string[] {
+  const exe = process.platform === 'win32' ? 'node.exe' : 'node';
+  const seen: string[] = [];
+  for (const dir of (process.env.PATH || '').split(process.platform === 'win32' ? ';' : ':')) {
+    if (!dir) continue;
+    const candidate = join(dir, exe);
+    if (existsSync(candidate) && !seen.includes(candidate)) seen.push(candidate);
+  }
+  return seen.slice(0, 3); // a couple of candidates is plenty
+}
+
+function installViaCli(nodeBinary: string): Promise<void> {
   const requireFromHere = createRequire(import.meta.url);
   const cliPath = join(dirname(requireFromHere.resolve('playwright/package.json')), 'cli.js');
 
   return new Promise<void>((resolveInstall, rejectInstall) => {
-    const child = spawn(process.execPath, [cliPath, 'install', 'chromium', '--no-shell'], {
+    const child = spawn(nodeBinary, [cliPath, 'install', 'chromium'], {
       stdio: ['ignore', 'pipe', 'pipe'],
       env: { ...process.env, ELECTRON_RUN_AS_NODE: '1' }
     });
@@ -148,9 +204,7 @@ function installViaCli(): Promise<void> {
         resolveInstall();
       } else {
         rejectInstall(new Error(
-          `Chromium download failed (exit code ${code}, signal ${signal}). ` +
-          `If you are behind a corporate proxy, set HTTPS_PROXY or PLAYWRIGHT_DOWNLOAD_HOST. ` +
-          `Last output: ${tail.slice(-500)}`
+          `exit code ${code}, signal ${signal}, last output: ${tail.slice(-300)}`
         ));
       }
     });

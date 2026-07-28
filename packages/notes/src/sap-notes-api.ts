@@ -271,6 +271,7 @@ export class SapNotesApiClient {
    */
   async getNote(noteId: string, token: string): Promise<SapNoteDetail | null> {
     logger.info(`📄 Fetching SAP Note: ${noteId}`);
+    const failures: string[] = [];
 
     try {
       // Try Playwright-based raw notes API first (most likely to get actual content)
@@ -288,6 +289,7 @@ export class SapNotesApiClient {
           // and return a useless stub. Let withAuthRetry() re-login and retry.
           throw error;
         }
+        failures.push(`playwright: ${errorMessage}`);
         logger.warn(`⚠️ Playwright approach failed: ${errorMessage}, trying HTTP fallbacks`);
       }
 
@@ -303,6 +305,8 @@ export class SapNotesApiClient {
         }
       } catch (error) {
         const errorMessage = error instanceof Error ? error.message : String(error);
+        if (errorMessage.includes('SESSION_EXPIRED')) throw error;
+        failures.push(`raw API: ${errorMessage}`);
         logger.debug(`Raw notes HTTP API failed: ${errorMessage}, trying OData fallbacks`);
       }
 
@@ -323,10 +327,17 @@ export class SapNotesApiClient {
           }
         } catch (error) {
           const errorMessage = error instanceof Error ? error.message : String(error);
+          if (errorMessage.includes('SESSION_EXPIRED')) throw error;
+          failures.push(`${endpoint}: ${errorMessage}`);
           logger.warn(`⚠️ Endpoint ${endpoint} failed: ${errorMessage}`);
         }
       }
 
+      if (failures.length > 0) {
+        // Every retrieval path broke — surface WHY instead of pretending the
+        // note does not exist (or worse, returning a content-free stub).
+        throw new Error(`all retrieval paths failed: ${failures.join(' | ')}`);
+      }
       logger.warn(`❌ SAP Note ${noteId} not found`);
       return null;
 
@@ -1348,19 +1359,17 @@ export class SapNotesApiClient {
    * Parse HTML response to extract note details
    */
   private parseHtmlForNoteDetail(html: string, noteId: string): SapNoteDetail | null {
-    // Extract title if available
     const titleMatch = html.match(/<title>(.*?)<\/title>/i);
-    const title = titleMatch ? titleMatch[1].replace(/SAP\s*-?\s*/i, '').trim() : `SAP Note ${noteId}`;
-    
-    return {
-      id: noteId,
-      title,
-      summary: 'SAP Note details available at the provided URL',
-      content: 'Please visit the URL for complete note content',
-      language: 'EN',
-      releaseDate: 'Unknown',
-      url: `https://launchpad.support.sap.com/#/notes/${noteId}`
-    };
+    const title = titleMatch ? titleMatch[1].trim() : '';
+    const head = html.slice(0, 5000).toLowerCase();
+
+    if (head.includes('accounts.sap.com') || /sign in|log on|logon/i.test(title) || head.includes('saml')) {
+      throw new Error('SESSION_EXPIRED: HTML fallback received the sign-in page instead of note content');
+    }
+    // No extractable content is a failure, not a success with a stub —
+    // returning a "please visit the URL" pseudo-note only hides the problem.
+    logger.debug(`HTML fallback for note ${noteId} contained no extractable content (title: "${title}")`);
+    return null;
   }
 
   /**
@@ -2047,7 +2056,7 @@ export class SapNotesApiClient {
 
       // If we get here, we didn't find useful content
       logger.warn(`⚠️ Playwright loaded page but couldn't extract note content`);
-      return null;
+      throw new Error(`page loaded but no note content found (title: "${pageTitle}", url: ${currentUrl}, content length: ${content.length})`);
 
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : String(error);
