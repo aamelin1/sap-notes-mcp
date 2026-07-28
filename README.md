@@ -16,8 +16,8 @@ This is a maintained fork of [marianfoo/sap-mcp-servers](https://github.com/mari
 
 ## Install (Claude Desktop)
 
-1. Download the latest [**sap-notes.mcpb**](https://github.com/aamelin1/sap-notes-mcp/releases/latest/download/sap-notes.mcpb) (or build it yourself, see below).
-2. Double-click the file (or drag it into Claude Desktop → Settings → Extensions).
+1. [Download the extension](https://github.com/aamelin1/sap-notes-mcp/releases/latest/download/sap-notes.mcpb) (or build it yourself, see below).
+2. In Claude Desktop open **Settings → Extensions → Advanced settings**, click **Install Extension…** and pick the downloaded `sap-notes.mcpb`.
 3. Enter your **SAP S-user** (e-mail or S-number) and **password** when prompted.
 4. Ask Claude something like *"Find SAP Notes about OData gateway error 415"*. The first call downloads Chromium and logs in — allow a couple of minutes; every call after that is fast.
 
