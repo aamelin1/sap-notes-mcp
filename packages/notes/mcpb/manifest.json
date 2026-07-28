@@ -1,0 +1,50 @@
+{
+  "manifest_version": "0.3",
+  "name": "sap-notes",
+  "display_name": "SAP Notes",
+  "version": "0.4.0",
+  "description": "Search and read SAP Notes / KBAs from me.sap.com using your own S-user.",
+  "long_description": "MCP server for searching and retrieving SAP Notes with full content and metadata (validity, support packages, corrections). Fork of marianfoo/sap-mcp-servers with self-healing re-authentication on expired sessions and automatic one-time Chromium download on first run (~170 MB). Requires an SAP S-user with access to me.sap.com.",
+  "author": {
+    "name": "aamelin1 (fork of marianfoo/sap-mcp-servers)",
+    "url": "https://github.com/aamelin1/sap-notes-mcp"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/aamelin1/sap-notes-mcp"
+  },
+  "server": {
+    "type": "node",
+    "entry_point": "server/dist/mcp-server.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/server/dist/mcp-server.js"],
+      "env": {
+        "SAP_USERNAME": "${user_config.sap_username}",
+        "SAP_PASSWORD": "${user_config.sap_password}",
+        "TOKEN_CACHE_FILE": "${HOME}/.sap-mcp/token-cache.json",
+        "MCP_MODE": "true"
+      }
+    }
+  },
+  "user_config": {
+    "sap_username": {
+      "type": "string",
+      "title": "SAP S-User (email)",
+      "description": "Your SAP Support Portal login, e.g. S0001234567 or your work e-mail linked to it.",
+      "required": true
+    },
+    "sap_password": {
+      "type": "string",
+      "title": "SAP Password",
+      "description": "Password for the S-user above. Stored in Claude Desktop settings.",
+      "required": true
+    }
+  },
+  "compatibility": {
+    "platforms": ["darwin", "win32"],
+    "runtimes": { "node": ">=18.0.0" }
+  },
+  "keywords": ["sap", "sap-notes", "support", "kba"],
+  "license": "Apache-2.0"
+}

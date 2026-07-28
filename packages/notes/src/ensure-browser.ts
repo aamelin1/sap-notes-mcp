@@ -1,6 +1,7 @@
 import { existsSync } from 'fs';
 import { spawn } from 'child_process';
 import { createRequire } from 'module';
+import { dirname, join } from 'path';
 import { chromium } from 'playwright';
 import { logger } from './logger.js';
 
@@ -51,8 +52,10 @@ async function provision(): Promise<void> {
 
   logger.warn('Chromium for Playwright not found — downloading it now (one-time, ~170 MB). This may take a few minutes...');
 
+  // playwright >=1.5x hides cli.js behind its exports map, so resolve the
+  // package root via package.json (always exported) and join the path manually.
   const requireFromHere = createRequire(import.meta.url);
-  const cliPath = requireFromHere.resolve('playwright/cli.js');
+  const cliPath = join(dirname(requireFromHere.resolve('playwright/package.json')), 'cli.js');
 
   await new Promise<void>((resolveInstall, rejectInstall) => {
     const child = spawn(process.execPath, [cliPath, 'install', 'chromium', '--no-shell'], {
