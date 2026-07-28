@@ -1,43 +1,34 @@
 {
-  "name": "sap-mcp-servers",
+  "name": "sap-notes-mcp",
   "version": "0.0.0",
   "private": true,
-  "description": "Monorepo for SAP MCP servers (API Hub, Road Map Explorer, SAP Notes) and their shared SAP authentication module.",
+  "description": "SAP Notes MCP server packaged as a one-click .mcpb bundle for Claude Desktop (fork of marianfoo/sap-mcp-servers).",
   "license": "Apache-2.0",
   "author": "marianfoo",
   "type": "module",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/marianfoo/sap-mcp-servers.git"
+    "url": "git+https://github.com/aamelin1/sap-notes-mcp.git"
   },
-  "homepage": "https://github.com/marianfoo/sap-mcp-servers#readme",
+  "homepage": "https://github.com/aamelin1/sap-notes-mcp#readme",
   "bugs": {
-    "url": "https://github.com/marianfoo/sap-mcp-servers/issues"
+    "url": "https://github.com/aamelin1/sap-notes-mcp/issues"
   },
   "engines": {
     "node": ">=22.12.0"
   },
   "workspaces": [
     "packages/auth",
-    "packages/api-hub",
-    "packages/roadmap",
     "packages/notes"
   ],
   "scripts": {
-    "build": "npm run build -w @marianfoo/sap-mcp-auth && npm run build -w sap-api-hub-mcp -w sap-roadmap-mcp -w sap-note-search-mcp",
-    "build:auth": "npm run build -w @marianfoo/sap-mcp-auth",
+    "build": "npm run build -w @marianfoo/sap-mcp-auth && npm run build -w sap-note-search-mcp",
     "clean": "npm run clean --workspaces --if-present",
-    "typecheck": "npm run typecheck --workspaces --if-present",
-    "smoke:bin": "node scripts/smoke-mcp-bin.mjs packages/api-hub sap-api-hub-mcp sap-api-hub-mcp && node scripts/smoke-mcp-bin.mjs packages/roadmap sap-roadmap-mcp sap-roadmap-mcp",
-    "test": "npm run test --workspaces --if-present",
+    "test": "npm run test -w sap-note-search-mcp",
     "install:browsers": "playwright install chromium",
-    "commitlint": "commitlint --edit",
-    "prepare": "husky || true"
+    "build:mcpb": "packages/notes/mcpb/build-mcpb.sh"
   },
   "devDependencies": {
-    "@commitlint/cli": "^21.0.2",
-    "@commitlint/config-conventional": "^21.0.2",
-    "husky": "^9.1.7",
     "rimraf": "^6.0.0",
     "typescript": "^6.0.3"
   }

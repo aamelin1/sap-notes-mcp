@@ -43,3 +43,7 @@ logs/
 .idea/
 .vscode/
 combined-project-files.txt
+
+# packaging artifacts
+*.mcpb
+*.tgz

@@ -1,6 +1,6 @@
 {
   "name": "sap-note-search-mcp",
-  "version": "0.3.3",
+  "version": "0.4.0",
   "description": "MCP server for searching SAP Notes/KB articles using SAP Passport authentication and Playwright automation",
   "main": "dist/mcp-server.js",
   "type": "module",
@@ -13,8 +13,6 @@
   ],
   "scripts": {
     "build": "tsc",
-    "prepack": "npm run clean && npm run build",
-    "prepublishOnly": "npm run build",
     "dev": "tsx watch src/mcp-server.ts",
     "dev:http": "tsx watch src/http-mcp-server.ts",
     "serve": "node dist/mcp-server.js",
@@ -25,13 +23,11 @@
     "start:http:debug": "npm run build && npm run serve:http:debug",
     "test:auth": "npm run build && node test/test-auth.js",
     "test:auth:debug": "npm run build && HEADFUL=true LOG_LEVEL=debug node test/test-auth.js",
-    "test:docker:debug": "npm run build && node test/test-docker-debug.js",
     "test:mcp": "npm run build && node test/test-mcp-server.js",
     "test:mcp:debug": "npm run build && LOG_LEVEL=debug DOCKER_ENV=true node test/test-mcp-server.js",
     "test:api": "npm run build && node test/test-sap-api.js",
     "test:flow": "npm run build && node test/test-full-flow.js",
     "test": "npm run test:auth && npm run test:api && npm run test:mcp",
-    "debug:container": "./debug-container.sh",
     "clean": "rimraf dist"
   },
   "keywords": [
@@ -47,12 +43,11 @@
   "license": "Apache-2.0",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/marianfoo/sap-mcp-servers.git",
-    "directory": "packages/notes"
+    "url": "git+https://github.com/aamelin1/sap-notes-mcp.git"
   },
-  "homepage": "https://github.com/marianfoo/sap-mcp-servers/tree/main/packages/notes#readme",
+  "homepage": "https://github.com/aamelin1/sap-notes-mcp#readme",
   "bugs": {
-    "url": "https://github.com/marianfoo/sap-mcp-servers/issues"
+    "url": "https://github.com/aamelin1/sap-notes-mcp/issues"
   },
   "dependencies": {
     "@marianfoo/sap-mcp-auth": "^0.1.0",

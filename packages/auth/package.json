@@ -44,12 +44,11 @@
   },
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/marianfoo/sap-mcp-servers.git",
-    "directory": "packages/auth"
+    "url": "git+https://github.com/aamelin1/sap-notes-mcp.git"
   },
-  "homepage": "https://github.com/marianfoo/sap-mcp-servers/tree/main/packages/auth#readme",
+  "homepage": "https://github.com/aamelin1/sap-notes-mcp#readme",
   "bugs": {
-    "url": "https://github.com/marianfoo/sap-mcp-servers/issues"
+    "url": "https://github.com/aamelin1/sap-notes-mcp/issues"
   },
   "engines": {
     "node": ">=22.12.0"
