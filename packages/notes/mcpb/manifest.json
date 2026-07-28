@@ -18,12 +18,15 @@
     "entry_point": "server/dist/mcp-server.js",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/server/dist/mcp-server.js"],
+      "args": [
+        "${__dirname}/server/dist/mcp-server.js"
+      ],
       "env": {
         "SAP_USERNAME": "${user_config.sap_username}",
         "SAP_PASSWORD": "${user_config.sap_password}",
         "TOKEN_CACHE_FILE": "${HOME}/.sap-mcp/token-cache.json",
-        "MCP_MODE": "true"
+        "MCP_MODE": "true",
+        "SAP_SSO_STORAGE_STATE": "${HOME}/.sap-mcp/sso-storage-state.json"
       }
     }
   },
@@ -42,9 +45,19 @@
     }
   },
   "compatibility": {
-    "platforms": ["darwin", "win32"],
-    "runtimes": { "node": ">=18.0.0" }
+    "platforms": [
+      "darwin",
+      "win32"
+    ],
+    "runtimes": {
+      "node": ">=18.0.0"
+    }
   },
-  "keywords": ["sap", "sap-notes", "support", "kba"],
+  "keywords": [
+    "sap",
+    "sap-notes",
+    "support",
+    "kba"
+  ],
   "license": "Apache-2.0"
 }

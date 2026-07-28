@@ -1,4 +1,5 @@
 import { isAbsolute, join, resolve } from 'path';
+import { homedir } from 'os';
 import type { AuthConfig, AuthMethod, BrowserType, Logger } from './types.js';
 
 export interface LoadAuthConfigOptions {
@@ -33,7 +34,7 @@ export function loadAuthConfigFromEnv(options: LoadAuthConfigOptions): AuthConfi
     headful: env.HEADFUL === 'true',
     tokenCacheFile: resolveOptionalPath(tokenCacheFile) ?? tokenCacheFile,
     ssoStorageStateFile: resolveOptionalPath(
-      env.SAP_SSO_STORAGE_STATE || join(env.HOME || process.cwd(), '.sap-mcp', 'sso-storage-state.json')
+      env.SAP_SSO_STORAGE_STATE || join(env.HOME || homedir(), '.sap-mcp', 'sso-storage-state.json')
     ),
     browserType: normalizeBrowserType(env.PLAYWRIGHT_BROWSER_TYPE),
     sharedSsoTokenFastPath: options.sharedSsoTokenFastPath,
