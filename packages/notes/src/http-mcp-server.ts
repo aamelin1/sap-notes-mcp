@@ -234,7 +234,7 @@ class HttpSapNoteMcpServer {
   private createMcpServer(): McpServer {
     const mcp = new McpServer({
       name: 'sap-note-search-mcp',
-      version: '0.4.4'
+      version: '0.4.5'
     });
 
     // ─── search ──────────────────────────────────────────────────
@@ -427,7 +427,7 @@ class HttpSapNoteMcpServer {
       res.json({
         status: 'healthy',
         server: 'sap-note-search-mcp',
-        version: '0.4.4',
+        version: '0.4.5',
         protocol: 'streamable-http',
         tools: ['search', 'fetch']
       });

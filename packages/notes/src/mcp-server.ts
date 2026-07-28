@@ -68,7 +68,7 @@ class SapNoteMcpServer {
     // Create MCP server with official SDK
     this.mcpServer = new McpServer({
       name: 'sap-note-search-mcp',
-      version: '0.4.4'
+      version: '0.4.5'
     });
 
     this.setupTools();

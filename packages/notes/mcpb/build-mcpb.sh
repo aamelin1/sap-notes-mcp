@@ -23,6 +23,7 @@ require('fs').writeFileSync('$STAGE/server/package.json', JSON.stringify(pkg, nu
 
 # 3. manifest + pack
 cp "$NOTES/mcpb/manifest.json" "$STAGE/manifest.json"
+cp "$NOTES/mcpb/icon.png" "$STAGE/icon.png"
 VERSION=$(node -p "require('$STAGE/manifest.json').version")
 OUT="${1:-$NOTES/sap-notes-$VERSION.mcpb}"
 npx --yes @anthropic-ai/mcpb pack "$STAGE" "$OUT"
