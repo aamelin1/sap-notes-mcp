@@ -68,7 +68,7 @@ class SapNoteMcpServer {
     // Create MCP server with official SDK
     this.mcpServer = new McpServer({
       name: 'sap-note-search-mcp',
-      version: '0.4.5'
+      version: '0.5.0'
     });
 
     this.setupTools();
@@ -167,7 +167,7 @@ class SapNoteMcpServer {
   private setupTools(): void {
     // SAP Note Search Tool
     this.mcpServer.registerTool(
-      'search',
+      'sap_note_search',
       {
         title: 'Search SAP Notes',
         description: SAP_NOTE_SEARCH_DESCRIPTION,
@@ -175,7 +175,7 @@ class SapNoteMcpServer {
         outputSchema: NoteSearchOutputSchema
       },
       async ({ q, lang = 'EN' }) => {
-        logger.info(`🔎 [search] Starting search for query: "${q}"`);
+        logger.info(`🔎 [sap_note_search] Starting search for query: "${q}"`);
 
         try {
           const searchResponse = await this.withAuthRetry(token =>
@@ -210,7 +210,7 @@ class SapNoteMcpServer {
             resultText += `URL: ${note.url}\n\n`;
           }
 
-          logger.info(`✅ [search] Successfully completed search, returning ${output.totalResults} results`);
+          logger.info(`✅ [sap_note_search] Successfully completed search, returning ${output.totalResults} results`);
 
           return {
             content: [{ type: 'text', text: resultText }],
@@ -234,7 +234,7 @@ class SapNoteMcpServer {
 
     // SAP Note Fetch Tool
     this.mcpServer.registerTool(
-      'fetch',
+      'sap_note_fetch',
       {
         title: 'Fetch SAP Note',
         description: SAP_NOTE_GET_DESCRIPTION,
@@ -242,7 +242,7 @@ class SapNoteMcpServer {
         outputSchema: NoteGetOutputSchema
       },
       async ({ id, lang = 'EN', includeCorrections = false }) => {
-        logger.info(`📄 [fetch] Getting note details for ID: ${id} (includeCorrections=${includeCorrections})`);
+        logger.info(`📄 [sap_note_fetch] Getting note details for ID: ${id} (includeCorrections=${includeCorrections})`);
 
         try {
           const noteDetail = await this.withAuthRetry(token =>
@@ -339,7 +339,7 @@ class SapNoteMcpServer {
             }
           }
 
-          logger.info(`✅ [fetch] Successfully retrieved note ${id}`);
+          logger.info(`✅ [sap_note_fetch] Successfully retrieved note ${id}`);
 
           return {
             content: [{ type: 'text', text: resultText }],

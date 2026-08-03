@@ -5,14 +5,14 @@ import { z } from 'zod';
  * SAP NOTE SCHEMAS
  * ============================================
  *
- * Tool names: "search" and "fetch"
+ * Tool names: "sap_note_search" and "sap_note_fetch"
  * Zod schemas with descriptions for MCP SDK tool registration.
  */
 
 // ─── SEARCH ────────────────────────────────────────────────────────────────
 
 /**
- * Input schema for the "search" tool
+ * Input schema for the "sap_note_search" tool
  */
 export const NoteSearchInputSchema = {
   q: z
@@ -90,7 +90,7 @@ export const NoteSearchOutputSchema = {
 // ─── FETCH ─────────────────────────────────────────────────────────────────
 
 /**
- * Input schema for the "fetch" tool
+ * Input schema for the "sap_note_fetch" tool
  */
 export const NoteGetInputSchema = {
   id: z
@@ -115,7 +115,7 @@ export const NoteGetInputSchema = {
 };
 
 /**
- * Output schema for the "fetch" tool
+ * Output schema for the "sap_note_fetch" tool
  */
 export const NoteGetOutputSchema = {
   id: z.string().describe('SAP Note ID.'),
@@ -288,8 +288,8 @@ USE WHEN the user mentions errors, bugs, fixes, patches, dumps, unexpected behav
 DO NOT USE for "how to configure/set up" questions (use sap_help_search), tutorials, or general "what is" questions.
 
 WORKFLOW:
-1. search(q="OData 415 error CAP") → ranked results
-2. fetch(id="2744792") → full content with solution
+1. sap_note_search(q="OData 415 error CAP") → ranked results
+2. sap_note_fetch(id="2744792") → full content with solution
 3. Synthesize answer
 
 QUERY TIPS — be specific:
