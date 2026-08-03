@@ -27,8 +27,14 @@ If your S-user has MFA, the first login opens a visible browser window — compl
 
 | Tool | What it does |
 |------|--------------|
-| `search` | Search SAP Notes by keywords, error text, component, or note number |
-| `fetch` | Retrieve a note's full content and metadata by ID; `includeCorrections=true` adds detailed ABAP correction instructions (affected objects, prerequisites) |
+| `sap_note_search` | Search SAP Notes by keywords, error text, component, or note number |
+| `sap_note_fetch` | Retrieve a note's full content and metadata by ID; `includeCorrections=true` adds detailed ABAP correction instructions (affected objects, prerequisites) |
+
+> [!IMPORTANT]
+> These were called `search` and `fetch` up to 0.4.x. Generic names are a bad idea in
+> MCP — a server has no idea what else is connected — and in practice they shadowed a
+> web-search server's identically named tools, leaving the model to route by luck.
+> Renamed in 0.5.0 with no aliases; update anything that refers to them by name.
 
 ## Configuration
 
@@ -59,13 +65,28 @@ npm run build          # builds packages/auth, then packages/notes
 npm run build:mcpb     # produces packages/notes/sap-notes-<version>.mcpb
 ```
 
-Useful checks (need real credentials in the environment or a `.env` file):
+### Tests
+
+One suite needs no credentials, and it is the one CI runs on every push — across
+Linux, macOS and Windows on Node 22 and 24, alongside the build and a packing check:
+
+```bash
+cd packages/notes
+npm run test:contract   # server starts, speaks MCP, advertises the expected tools
+```
+
+The rest log in to me.sap.com with a personal S-user, so they stay local — an S-user
+does not belong in a shared runner's secrets:
 
 ```bash
 cd packages/notes
 npm run test:auth      # login flow only
 npm run test:api       # search + fetch end to end
+npm run test:mcp       # full protocol exercise, calls the tools for real
 ```
+
+Set `SAP_NOTES_SKIP_BROWSER_PROVISION=1` to stop the server downloading Chromium on
+start — useful in CI, or in an image where the Playwright cache is already filled.
 
 ## Repository layout
 

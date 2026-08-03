@@ -1,0 +1,117 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+env:
+  # Nothing here opens a browser, and the postinstall download is ~200 MB.
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
+jobs:
+  build:
+    name: build + contract (${{ matrix.os }}, node ${{ matrix.node }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # The bundle is installed on Windows and macOS, so both are worth building on:
+        # this server deals in filesystem paths and a spawned browser, and those are
+        # exactly the things that differ per platform.
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: ['22', '24']
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node }}
+          cache: npm
+
+      - run: npm ci
+
+      - name: Build every workspace (auth, then the server)
+        run: npm run build
+
+      # The only suite that runs without an S-user. test:auth, test:sap-api and
+      # test-mcp-server all reach live SAP with personal credentials, which have no
+      # business on a shared runner, so they stay a local exercise.
+      - name: Tool contract
+        run: node packages/notes/test/test-tools-contract.js
+
+  versions-agree:
+    name: version numbers agree
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Compare package.json with the bundle manifest
+        run: |
+          node -e "
+          const pkg = require('./packages/notes/package.json').version;
+          const bundle = require('./packages/notes/mcpb/manifest.json').version;
+          console.log({ pkg, bundle });
+          if (pkg !== bundle) {
+            console.error('Version mismatch: bump both together.');
+            process.exit(1);
+          }
+          "
+      # serverInfo is not checked here on purpose: it reads package.json at runtime
+      # rather than repeating the number, and the contract test asserts they agree.
+
+  bundle:
+    name: .mcpb bundle packs
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Pack the bundle
+        run: npm run build:mcpb
+
+      - name: Check what ended up inside
+        run: |
+          set -euo pipefail
+          BUNDLE=$(ls packages/notes/sap-notes-*.mcpb)
+          echo "bundle: $BUNDLE ($(du -h "$BUNDLE" | cut -f1))"
+
+          # Listed once into a file, then grepped. Piping unzip into `grep -q` looks
+          # tidier but breaks under pipefail: grep exits on the first match, unzip
+          # takes SIGPIPE, and the pipeline reports failure for a file that is there.
+          unzip -l "$BUNDLE" > /tmp/bundle-listing.txt
+          tail -n 15 /tmp/bundle-listing.txt
+
+          for required in manifest.json server/dist/mcp-server.js server/package.json; do
+            grep -q " $required$" /tmp/bundle-listing.txt \
+              || { echo "::error::$required is missing from the bundle"; exit 1; }
+          done
+
+          # A node-type bundle carries its dependencies; without them the extension
+          # installs and then fails to start.
+          grep -q "server/node_modules/" /tmp/bundle-listing.txt \
+            || { echo "::error::the bundle ships no node_modules"; exit 1; }
+
+          # Credentials come from user_config at install time and must never be baked in.
+          unzip -p "$BUNDLE" server/package.json > /tmp/bundle-pkg.json
+          if grep -qiE "SAP_PASSWORD|SAP_USERNAME" /tmp/bundle-pkg.json; then
+            echo "::error::credentials leaked into the packaged manifest"
+            exit 1
+          fi
+          echo "bundle contents look right"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: mcpb-bundle
+          path: packages/notes/sap-notes-*.mcpb
+          if-no-files-found: error

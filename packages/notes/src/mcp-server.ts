@@ -10,6 +10,7 @@ import type { SapWebAuthenticator } from '@marianfoo/sap-mcp-auth';
 import { createNotesAuthenticator } from './auth.js';
 import { SapNotesApiClient } from './sap-notes-api.js';
 import { logger } from './logger.js';
+import { SERVER_VERSION } from './version.js';
 import { ensureChromiumReady } from './ensure-browser.js';
 import {
   NoteSearchInputSchema,
@@ -68,7 +69,7 @@ class SapNoteMcpServer {
     // Create MCP server with official SDK
     this.mcpServer = new McpServer({
       name: 'sap-note-search-mcp',
-      version: '0.5.0'
+      version: SERVER_VERSION
     });
 
     this.setupTools();

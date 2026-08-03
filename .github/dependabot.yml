@@ -1,0 +1,27 @@
+version: 2
+
+# Until now Dependabot opened pull requests here with nothing to validate them —
+# the fork dropped the upstream workflows during its slim-down. With CI back, each
+# bump gets a build on three operating systems plus the tool contract before merge.
+updates:
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: ci
+    groups:
+      actions:
+        patterns: ['*']
+
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: deps
+    groups:
+      # One pull request rather than a dozen: this is a workspace repository, and
+      # the packages are only ever upgraded together anyway.
+      npm:
+        patterns: ['*']

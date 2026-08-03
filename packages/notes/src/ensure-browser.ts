@@ -31,7 +31,21 @@ import { logger } from './logger.js';
  */
 let provisionPromise: Promise<void> | null = null;
 
+/**
+ * Set SAP_NOTES_SKIP_BROWSER_PROVISION=1 where the Playwright cache is filled by
+ * something other than this server — CI, or a container image that bakes the
+ * browsers in. Without it, merely starting the server begins a ~200 MB download.
+ * Logins still need Chromium; skipping only suppresses the automatic install.
+ */
+function provisioningDisabled(): boolean {
+  const flag = process.env.SAP_NOTES_SKIP_BROWSER_PROVISION;
+  return flag === '1' || flag?.toLowerCase() === 'true';
+}
+
 export function ensureChromiumReady(): Promise<void> {
+  if (provisioningDisabled()) {
+    return Promise.resolve();
+  }
   if (!provisionPromise) {
     provisionPromise = provision().catch(error => {
       provisionPromise = null; // allow retry on next call
