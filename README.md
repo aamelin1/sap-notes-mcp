@@ -30,12 +30,6 @@ If your S-user has MFA, the first login opens a visible browser window — compl
 | `sap_note_search` | Search SAP Notes by keywords, error text, component, or note number |
 | `sap_note_fetch` | Retrieve a note's full content and metadata by ID; `includeCorrections=true` adds detailed ABAP correction instructions (affected objects, prerequisites) |
 
-> [!IMPORTANT]
-> These were called `search` and `fetch` up to 0.4.x. Generic names are a bad idea in
-> MCP — a server has no idea what else is connected — and in practice they shadowed a
-> web-search server's identically named tools, leaving the model to route by luck.
-> Renamed in 0.5.0 with no aliases; update anything that refers to them by name.
-
 ## Configuration
 
 Credentials come from the `.mcpb` config dialog, or from environment variables when running the server manually:
@@ -63,6 +57,15 @@ cd sap-notes-mcp
 npm install
 npm run build          # builds packages/auth, then packages/notes
 npm run build:mcpb     # produces packages/notes/sap-notes-<version>.mcpb
+```
+
+When publishing a release, attach the bundle as **`sap-notes.mcpb`** — without the
+version. The download link above is `releases/latest/download/sap-notes.mcpb`, which
+GitHub only resolves while the asset name stays constant. The build script takes the
+output path as an argument if you would rather not rename afterwards:
+
+```bash
+packages/notes/mcpb/build-mcpb.sh packages/notes/sap-notes.mcpb
 ```
 
 ### Tests
