@@ -1,0 +1,121 @@
+name: Release
+
+# Tag a commit with vX.Y.Z and push the tag:
+#   git tag v0.5.1 && git push origin v0.5.1
+# This verifies the tag against the version in the tree, builds, packs the bundle and
+# attaches it to a GitHub release.
+#
+# Nothing is published to npm: the package name belongs to the upstream project, and
+# this fork is distributed as the .mcpb bundle.
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: read
+
+env:
+  PLAYWRIGHT_SKIP_BROWSER_DOWNLOAD: '1'
+
+jobs:
+  build:
+    name: Build and pack the bundle
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '22'
+          cache: npm
+
+      - name: The tag must match the version in the tree
+        run: |
+          node -e "
+          const fs = require('fs');
+          const pkg = require('./packages/notes/package.json').version;
+          const bundle = require('./packages/notes/mcpb/manifest.json').version;
+          const tag = process.env.GITHUB_REF_NAME;
+          console.log({ tag, pkg, bundle });
+          if (pkg !== bundle) {
+            console.error('Version mismatch between package.json and the bundle manifest.');
+            process.exit(1);
+          }
+          if (tag !== 'v' + pkg) {
+            console.error(\`Tag \${tag} does not match version \${pkg}.\`);
+            process.exit(1);
+          }
+          // Checked here rather than in the release job so a missing entry stops the
+          // run before a release exists.
+          const changelog = fs.readFileSync('CHANGELOG.md', 'utf8');
+          if (!new RegExp('^## \\\\[' + pkg.replace(/\./g, '\\\\.') + '\\\\]', 'm').test(changelog)) {
+            console.error(\`CHANGELOG.md has no '## [\${pkg}]' section.\`);
+            process.exit(1);
+          }
+          "
+
+      - run: npm ci
+      - run: npm run build
+
+      - name: Tool contract must hold before anything is published
+        run: node packages/notes/test/test-tools-contract.js
+
+      # Named without the version on purpose: the README hands out
+      # releases/latest/download/sap-notes.mcpb, which GitHub only resolves while the
+      # asset name stays constant.
+      - name: Pack the bundle
+        run: packages/notes/mcpb/build-mcpb.sh "$PWD/sap-notes.mcpb"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: mcpb-bundle
+          path: sap-notes.mcpb
+          if-no-files-found: error
+
+  github-release:
+    name: Attach the bundle to a GitHub release
+    needs: build
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      # Checkout first: it cleans the working directory, which would delete the
+      # artifact if it were downloaded before.
+      - uses: actions/checkout@v7
+
+      # Without this the release body is whatever GitHub can infer from merged pull
+      # requests, so work pushed straight to main shows up as "no changes".
+      - name: Take the release notes from the changelog
+        run: |
+          node -e "
+          const fs = require('fs');
+          const version = process.env.GITHUB_REF_NAME.replace(/^v/, '');
+          const text = fs.readFileSync('CHANGELOG.md', 'utf8');
+          const escaped = version.replace(/\./g, '\\\\.');
+          // End of input is (?![\s\S]), not \$: the m flag makes \$ mean end of *line*,
+          // so the lazy capture stops at the first blank line and the body comes out
+          // empty. Caught by running this step for real.
+          const section = text.match(
+            new RegExp('^## \\\\[' + escaped + '\\\\][^\\\\n]*\\\\n([\\\\s\\\\S]*?)(?=^## \\\\[|(?![\\\\s\\\\S]))', 'm'));
+          if (!section) {
+            console.error('CHANGELOG.md has no section for ' + version);
+            process.exit(1);
+          }
+          const body = section[1].trim();
+          fs.writeFileSync('release_body.md', body + '\n');
+          console.log(body);
+          "
+
+      - uses: actions/download-artifact@v8
+        with:
+          name: mcpb-bundle
+          path: .
+
+      # body_path plus generate_release_notes: the action documents the body as
+      # pre-pended to the generated notes, so the changelog leads.
+      - uses: softprops/action-gh-release@v3.0.2
+        with:
+          body_path: release_body.md
+          generate_release_notes: true
+          files: sap-notes.mcpb

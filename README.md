@@ -59,14 +59,23 @@ npm run build          # builds packages/auth, then packages/notes
 npm run build:mcpb     # produces packages/notes/sap-notes-<version>.mcpb
 ```
 
-When publishing a release, attach the bundle as **`sap-notes.mcpb`** — without the
-version. The download link above is `releases/latest/download/sap-notes.mcpb`, which
-GitHub only resolves while the asset name stays constant. The build script takes the
-output path as an argument if you would rather not rename afterwards:
+### Releasing
+
+Bump the version in `packages/notes/package.json` and `packages/notes/mcpb/manifest.json`
+together, add a `## [X.Y.Z]` section to [CHANGELOG.md](CHANGELOG.md), then tag and push:
 
 ```bash
-packages/notes/mcpb/build-mcpb.sh packages/notes/sap-notes.mcpb
+git tag v0.5.1 && git push origin v0.5.1
 ```
+
+The release workflow checks that the tag, both manifests and the changelog agree, runs
+the build and the tool contract, packs the bundle as `sap-notes.mcpb` and attaches it to
+a GitHub release whose notes come from the changelog. Everything that can invalidate a
+release is checked before the release exists.
+
+The asset name deliberately carries no version: the download link above is
+`releases/latest/download/sap-notes.mcpb`, and GitHub only resolves that while the name
+stays constant.
 
 ### Tests
 
