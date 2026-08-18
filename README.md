@@ -16,7 +16,7 @@ This is a maintained fork of [marianfoo/sap-mcp-servers](https://github.com/mari
 
 ## Install (Claude Desktop)
 
-1. [Download the extension](https://github.com/aamelin1/sap-notes-mcp/releases/latest/download/sap-notes.mcpb) (or build it yourself, see below).
+1. [Download the extension](https://github.com/aamelin1/sap-notes-mcp/releases/latest/download/sap-notes.mcpb) (or [build it yourself](CONTRIBUTING.md)).
 2. In Claude Desktop open **Settings → Extensions → Advanced settings**, click **Install Extension…** and pick the downloaded `sap-notes.mcpb`.
 3. Enter your **SAP S-user** (e-mail or S-number) and **password** when prompted.
 4. Ask Claude something like *"Find SAP Notes about OData gateway error 415"*. The first call downloads Chromium and logs in — allow a couple of minutes; every call after that is fast.
@@ -47,71 +47,14 @@ Credentials come from the `.mcpb` config dialog, or from environment variables w
 
 \* one pair required: username+password **or** certificate.
 
-## Build from source
-
-Requires Node.js ≥ 18.
-
-```bash
-git clone https://github.com/aamelin1/sap-notes-mcp.git
-cd sap-notes-mcp
-npm install
-npm run build          # builds packages/auth, then packages/notes
-npm run build:mcpb     # produces packages/notes/sap-notes-<version>.mcpb
-```
-
-### Releasing
-
-Bump the version in `packages/notes/package.json` and `packages/notes/mcpb/manifest.json`
-together, add a `## [X.Y.Z]` section to [CHANGELOG.md](CHANGELOG.md), then tag and push:
-
-```bash
-git tag v0.5.1 && git push origin v0.5.1
-```
-
-The release workflow checks that the tag, both manifests and the changelog agree, runs
-the build and the tool contract, packs the bundle as `sap-notes.mcpb` and attaches it to
-a GitHub release whose notes come from the changelog. Everything that can invalidate a
-release is checked before the release exists.
-
-The asset name deliberately carries no version: the download link above is
-`releases/latest/download/sap-notes.mcpb`, and GitHub only resolves that while the name
-stays constant.
-
-### Tests
-
-One suite needs no credentials, and it is the one CI runs on every push — across
-Linux, macOS and Windows on Node 22 and 24, alongside the build and a packing check:
-
-```bash
-cd packages/notes
-npm run test:contract   # server starts, speaks MCP, advertises the expected tools
-```
-
-The rest log in to me.sap.com with a personal S-user, so they stay local — an S-user
-does not belong in a shared runner's secrets:
-
-```bash
-cd packages/notes
-npm run test:auth      # login flow only
-npm run test:api       # search + fetch end to end
-npm run test:mcp       # full protocol exercise, calls the tools for real
-```
-
-Set `SAP_NOTES_SKIP_BROWSER_PROVISION=1` to stop the server downloading Chromium on
-start — useful in CI, or in an image where the Playwright cache is already filled.
-
-## Repository layout
-
-```
-packages/
-├── auth/    # shared SAP web authentication (Playwright login, cookie & SSO state cache)
-└── notes/   # the MCP server itself (stdio + HTTP transports) and the .mcpb packaging
-    └── mcpb/  # manifest.json + build-mcpb.sh
-```
-
 ## How sessions work
 
 The server logs into me.sap.com with Playwright once, then reuses the session via two artifacts: an HTTP cookie cache (`TOKEN_CACHE_FILE`) and a Playwright storage state (`SAP_SSO_STORAGE_STATE`). Both are treated as a single unit: on any expired-session signal they are deleted together, a fresh login runs, and the failed request is retried once. There is nothing to babysit — no cron jobs or manual re-logins.
+
+## Contributing
+
+Building from source, the test suites and the release process are described in
+[CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## Credits & license
 
