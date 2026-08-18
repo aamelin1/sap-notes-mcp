@@ -21,6 +21,24 @@ import {
   SAP_NOTE_GET_DESCRIPTION
 } from './schemas/sap-notes.js';
 import { parseNoteContent } from './html-utils.js';
+import { patchToolSchemas, toJsonSchema2020, type ToolSchemaOverrides } from './schema-compat.js';
+
+/**
+ * Tool schemas re-advertised as draft-2020-12 — see schema-compat.ts. The keys are
+ * the tool names as registered below; the contract test checks the dialect of every
+ * advertised tool, so a rename that forgets this map fails there.
+ */
+const TOOL_SCHEMA_OVERRIDES: ToolSchemaOverrides = {
+  sap_note_search: {
+    inputSchema: toJsonSchema2020(NoteSearchInputSchema, 'input'),
+    outputSchema: toJsonSchema2020(NoteSearchOutputSchema, 'output')
+  },
+  sap_note_fetch: {
+    inputSchema: toJsonSchema2020(NoteGetInputSchema, 'input'),
+    outputSchema: toJsonSchema2020(NoteGetOutputSchema, 'output')
+  }
+};
+
 
 // Get the directory of this module for resolving paths
 const __filename = fileURLToPath(import.meta.url);
@@ -379,7 +397,7 @@ class SapNoteMcpServer {
     
     try {
       // Create stdio transport
-      const transport = new StdioServerTransport();
+      const transport = patchToolSchemas(new StdioServerTransport(), TOOL_SCHEMA_OVERRIDES);
       
       // Connect server to transport
       await this.mcpServer.connect(transport);

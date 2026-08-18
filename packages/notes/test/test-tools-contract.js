@@ -23,6 +23,7 @@ const pkg = JSON.parse(readFileSync(join(here, '..', 'package.json'), 'utf8'));
 const serverEntry = join(here, '..', 'dist', 'mcp-server.js');
 
 const EXPECTED_TOOLS = ['sap_note_fetch', 'sap_note_search'];
+const DIALECT_2020_12 = 'https://json-schema.org/draft/2020-12/schema';
 const TIMEOUT_MS = 30_000;
 
 const failures = [];
@@ -134,6 +135,19 @@ for (const tool of tools) {
     `${tool.description?.length ?? 0} chars`);
   check(Boolean(tool.inputSchema?.properties),
     `${tool.name} declares an input schema`);
+
+  // The dialect matters as much as the shape: a client that validates outputSchema
+  // against 2020-12 only — Claude Code / Cowork uses Ajv 2020 — refuses to call a
+  // tool advertised as draft-07, before the tool ever runs. The SDK labels its own
+  // conversion draft-07, so src/schema-compat.ts overrides both schemas; this is the
+  // check that notices when that override stops covering a tool.
+  for (const kind of ['inputSchema', 'outputSchema']) {
+    const dialect = tool[kind]?.$schema;
+    check(dialect === DIALECT_2020_12,
+      `${tool.name} advertises its ${kind} as draft-2020-12`, String(dialect));
+  }
+  check(Boolean(tool.outputSchema?.properties),
+    `${tool.name} declares an output schema`);
 }
 
 // The description of the search tool points at the companion server's tool by name.

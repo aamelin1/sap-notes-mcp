@@ -8,6 +8,32 @@ Versions up to 0.3.x were released by the upstream project,
 [marianfoo/sap-mcp-servers](https://github.com/marianfoo/sap-mcp-servers) (archived).
 This file starts where the fork does.
 
+## [0.5.1] — 2026-08-18
+
+### Fixed
+
+- Both tools are advertised as JSON Schema **draft-2020-12** instead of draft-07, so
+  clients that validate a tool's `outputSchema` accept them again. Claude Code /
+  Cowork validates with Ajv 2020 and refused to call either tool — *Tool
+  'sap_note_fetch' has an invalid outputSchema: JSON Schema declares an unsupported
+  dialect* — before the tool ever ran, which is why no request reached SAP and no
+  server log showed anything.
+
+  Nothing in this fork changed to cause it. The MCP SDK converts the Zod schemas
+  itself and labels the result draft-07: `McpServer` calls `toJsonSchemaCompat()`
+  with no target and its `mapMiniTarget(undefined)` returns `'draft-7'`. That has
+  been true of every SDK release from 1.20 through 1.30, so the dialect on the wire
+  was always draft-07; what changed is the strictness of the client reading it. Only
+  a server that declares an `outputSchema` is exposed at all, which is why the
+  sibling SAP Help server and the upstream API Hub / Road Map servers are unaffected.
+
+  `src/schema-compat.ts` now converts both schemas with Zod v4 — whose
+  `toJSONSchema` targets 2020-12 — and swaps them into the tools/list response on the
+  way out. Tool names, inputs, outputs and the structured content are unchanged. The
+  tool-contract test asserts the advertised dialect of every tool, so this cannot
+  regress silently, and the whole workaround can be deleted once the SDK stops
+  defaulting to draft-07.
+
 ## [0.5.0] — 2026-08-03
 
 ### Changed — breaking
