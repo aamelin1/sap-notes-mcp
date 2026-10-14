@@ -26,11 +26,12 @@ npm run build:mcpb     # produces packages/notes/sap-notes-<version>.mcpb
 
 ## Tests
 
-One suite needs no credentials, and it is the one CI runs on every push — across
+The search regression tests and tool-contract suite need no credentials; CI runs both on every push — across
 Linux, macOS and Windows on Node 22 and 24, alongside the build and a packing check:
 
 ```bash
 cd packages/notes
+npm run test:search     # failures reject; explicit note IDs still work
 npm run test:contract   # server starts, speaks MCP, advertises the expected tools
 ```
 

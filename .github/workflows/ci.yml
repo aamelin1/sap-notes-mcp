@@ -38,7 +38,10 @@ jobs:
       - name: Build every workspace (auth, then the server)
         run: npm run build
 
-      # The only suite that runs without an S-user. test:auth, test:sap-api and
+      - name: Search failure regression tests
+        run: node --test packages/notes/test/test-search-failure.js
+
+      # The tool-contract suite also needs no S-user. test:auth, test:sap-api and
       # test-mcp-server all reach live SAP with personal credentials, which have no
       # business on a shared runner, so they stay a local exercise.
       - name: Tool contract

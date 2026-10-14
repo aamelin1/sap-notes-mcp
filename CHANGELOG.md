@@ -8,6 +8,16 @@ Versions up to 0.3.x were released by the upstream project,
 [marianfoo/sap-mcp-servers](https://github.com/marianfoo/sap-mcp-servers) (archived).
 This file starts where the fork does.
 
+## [Unreleased]
+
+### Fixed
+
+- Failed Coveo searches now return an explicit unavailable-search error instead of
+  trying speculative internal search endpoints. Removed the HTML fallback that
+  fabricated SAP Note results and publication dates from arbitrary numbers.
+  Direct retrieval remains available when the query explicitly contains a note ID.
+- Added credential-free regression tests for search failures and direct lookup to CI.
+
 ## [0.5.1] — 2026-08-18
 
 ### Fixed

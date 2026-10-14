@@ -201,10 +201,10 @@ export class SapNotesApiClient {
       } catch (coveoError) {
         const errorMessage = coveoError instanceof Error ? coveoError.message : String(coveoError);
         logger.warn(`⚠️ Primary Coveo search failed: ${errorMessage}`);
-        logger.info('🔄 Attempting fallback search methods...');
+        logger.info('Attempting direct lookup only when the query is a SAP Note ID');
         
-        // Fallback 1: Direct note ID search (if query looks like a note ID)
-        if (/^\d{6,8}$/.test(query.trim())) {
+        // Direct lookup is safe only when the user explicitly supplied a note ID.
+        if (/^\d{5,10}$/.test(query.trim())) {
           logger.info(`🎯 Fallback 1: Query "${query}" appears to be a note ID, trying direct note access...`);
           try {
             const noteId = query.trim();
@@ -234,27 +234,10 @@ export class SapNotesApiClient {
           logger.debug(`📝 Query "${query}" doesn't match note ID pattern, skipping direct note access`);
         }
         
-        // Fallback 2: SAP Internal Search API (bypasses Coveo)
-        try {
-          logger.info('🔄 Fallback 2: Trying SAP internal search API...');
-          const fallbackResults = await this.searchViaInternalAPI(query, token, maxResults);
-          if (fallbackResults && fallbackResults.length > 0) {
-            logger.info(`✅ Fallback 2 SUCCESS: Found ${fallbackResults.length} result(s) via internal API`);
-            return {
-              results: fallbackResults,
-              totalResults: fallbackResults.length,
-              query
-            };
-          } else {
-            logger.warn(`⚠️ Fallback 2: Internal API returned no results`);
-          }
-        } catch (internalError) {
-          logger.warn(`❌ Fallback 2 failed: ${internalError instanceof Error ? internalError.message : String(internalError)}`);
-        }
-        
-        // Fallback 3: Return helpful error message with guidance
-        const helpfulMessage = `Search temporarily unavailable: Coveo search engine failed (${errorMessage}) and fallback search methods found no results.\n\n🔧 WORKAROUNDS:\n1. If you have a specific SAP Note ID (e.g., 2744792), use fetch(id="2744792") — this works perfectly!\n2. Try searching directly on https://me.sap.com/notes\n3. Search may work better outside containerized environments\n\nNote: Individual note retrieval via fetch() is fully functional and can access complete SAP Note content.`;
-        
+        const helpfulMessage = `Search temporarily unavailable: Coveo search engine failed (${errorMessage}). ` +
+          'No search results are available. Try again later, search on https://me.sap.com/notes, ' +
+          'or use sap_note_fetch with a known SAP Note ID.';
+
         logger.error(`❌ All search methods exhausted: ${helpfulMessage}`);
         throw new Error(helpfulMessage);
       }
@@ -1023,155 +1006,6 @@ export class SapNotesApiClient {
       this.browser = null;
       this.browserContext = null;
     }
-  }
-
-  /**
-   * Search via SAP internal APIs (fallback when Coveo fails)
-   */
-  private async searchViaInternalAPI(query: string, token: string, maxResults: number): Promise<SapNoteResult[]> {
-    logger.info(`🔍 Internal API: Searching for "${query}" with multiple endpoint strategies`);
-    
-    const searchEndpoints = [
-      // Try current knowledge search endpoint (modern API)
-      `/knowledge/search/${encodeURIComponent(JSON.stringify({
-        q: query,
-        tab: 'Support',
-        f: [{ field: 'documenttype', value: ['SAP Note'] }]
-      }))}`,
-      
-      // Try simplified search endpoint
-      `/support/search?q=${encodeURIComponent(query)}&type=note&format=json`,
-      
-      // Try backend notes API (used by note retrieval)
-      `/backend/raw/sapnotes/Search?q=${encodeURIComponent(query)}&t=E&maxResults=${maxResults}`
-    ];
-    
-    for (let i = 0; i < searchEndpoints.length; i++) {
-      const endpoint = searchEndpoints[i];
-      try {
-        logger.info(`🌐 Internal API Strategy ${i + 1}/${searchEndpoints.length}: ${endpoint.substring(0, 80)}...`);
-        const response = await this.makeRequest(endpoint, token);
-        
-        logger.debug(`📊 Response status: ${response.status} ${response.statusText}`);
-        
-        if (response.ok) {
-          const results = await this.parseInternalSearchResponse(response, query);
-          if (results && results.length > 0) {
-            logger.info(`✅ Internal API Strategy ${i + 1} SUCCESS: Found ${results.length} results`);
-            return results.slice(0, maxResults);
-          } else {
-            logger.debug(`📝 Internal API Strategy ${i + 1}: No results found`);
-          }
-        } else {
-          logger.warn(`❌ Internal API Strategy ${i + 1}: HTTP ${response.status} ${response.statusText}`);
-        }
-      } catch (error) {
-        logger.warn(`❌ Internal API Strategy ${i + 1} failed: ${error instanceof Error ? error.message : String(error)}`);
-        continue;
-      }
-    }
-    
-    logger.warn('❌ All internal API strategies failed - no results found');
-    return [];
-  }
-
-  /**
-   * Parse response from internal SAP search APIs
-   */
-  private async parseInternalSearchResponse(response: Response, query: string): Promise<SapNoteResult[]> {
-    try {
-      const contentType = response.headers.get('content-type') || '';
-      logger.debug(`📄 Parsing response with content-type: ${contentType}`);
-      
-      if (contentType.includes('application/json')) {
-        const data = await response.json();
-        logger.debug(`📊 JSON response keys: ${Object.keys(data).join(', ')}`);
-        
-        // Handle modern SAP backend raw API responses (similar to note retrieval)
-        if (data.Response && data.Response.SearchResults) {
-          const results = data.Response.SearchResults.results || data.Response.SearchResults;
-          if (Array.isArray(results)) {
-            logger.debug(`✅ Found ${results.length} results in modern backend format`);
-            return results.map((item: any) => ({
-              id: item.Number || item.id || 'unknown',
-              title: item.Title || item.title || 'No title',
-              summary: item.Summary || item.summary || 'No summary available',
-              component: item.Component || undefined,
-              releaseDate: item.ReleaseDate || new Date().toISOString(),
-              language: item.Language || 'EN',
-              url: `https://launchpad.support.sap.com/#/notes/${item.Number || item.id}`
-            }));
-          }
-        }
-        
-        // Handle knowledge search API responses
-        if (data.results && Array.isArray(data.results)) {
-          logger.debug(`✅ Found ${data.results.length} results in knowledge search format`);
-          return data.results.map((item: any) => ({
-            id: item.mh_id || item.id || item.noteId || 'unknown',
-            title: item.title || item.mh_description || 'No title',
-            summary: item.summary || item.description || item.mh_description || 'No summary available',
-            component: item.mh_app_component || item.component || undefined,
-            releaseDate: item.date || new Date().toISOString(),
-            language: item.language || 'EN',
-            url: item.mh_alt_url || `https://launchpad.support.sap.com/#/notes/${item.mh_id || item.id}`
-          }));
-        }
-        
-        // Handle simple arrays
-        if (Array.isArray(data)) {
-          logger.debug(`✅ Found ${data.length} results in simple array format`);
-          return data.map((item: any) => ({
-            id: item.id || item.noteId || item.Number || 'unknown',
-            title: item.title || item.name || item.Title || 'No title',
-            summary: item.summary || item.description || item.Summary || 'No summary available',
-            component: item.component || undefined,
-            releaseDate: item.date || item.ReleaseDate || new Date().toISOString(),
-            language: item.language || item.Language || 'EN',
-            url: `https://launchpad.support.sap.com/#/notes/${item.id || item.noteId || item.Number}`
-          }));
-        }
-        
-        logger.debug(`⚠️ Unrecognized JSON format - trying to extract note IDs`);
-      } else if (contentType.includes('text/html')) {
-        // Try to parse HTML search results (basic extraction)
-        const html = await response.text();
-        logger.debug(`📄 Parsing HTML response (length: ${html.length})`);
-        return this.parseHTMLSearchResults(html, query);
-      } else {
-        logger.debug(`⚠️ Unsupported content type: ${contentType}`);
-      }
-      
-      return [];
-    } catch (error) {
-      logger.warn(`❌ Failed to parse internal API response: ${error instanceof Error ? error.message : String(error)}`);
-      return [];
-    }
-  }
-
-  /**
-   * Basic HTML parsing for search results (fallback)
-   */
-  private parseHTMLSearchResults(html: string, query: string): SapNoteResult[] {
-    // This is a basic implementation - could be enhanced with proper HTML parsing
-    const results: SapNoteResult[] = [];
-    
-    // Look for note ID patterns in the HTML
-    const noteIdMatches = html.match(/\b\d{6,8}\b/g);
-    if (noteIdMatches) {
-      const uniqueIds = [...new Set(noteIdMatches)];
-      results.push(...uniqueIds.slice(0, 5).map(id => ({
-        id,
-        title: `SAP Note ${id}`,
-        summary: `Found note ID ${id} in search results for "${query}"`,
-        component: undefined,
-        releaseDate: new Date().toISOString(),
-        language: 'EN',
-        url: `https://launchpad.support.sap.com/#/notes/${id}`
-      })));
-    }
-    
-    return results;
   }
 
   /**
