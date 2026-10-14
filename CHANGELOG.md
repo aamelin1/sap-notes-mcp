@@ -8,7 +8,7 @@ Versions up to 0.3.x were released by the upstream project,
 [marianfoo/sap-mcp-servers](https://github.com/marianfoo/sap-mcp-servers) (archived).
 This file starts where the fork does.
 
-## [Unreleased]
+## [0.5.2] — 2026-10-14
 
 ### Fixed
 
